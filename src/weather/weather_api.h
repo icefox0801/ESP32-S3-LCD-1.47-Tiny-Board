@@ -1,10 +1,15 @@
 #ifndef WEATHER_API_H
 #define WEATHER_API_H
 
-#include <WiFi.h>
+// System libraries
 #include <HTTPClient.h>
+#include <WiFi.h>
+
+// Third-party libraries
 #include <ArduinoJson.h>
-#include "lvgl.h"
+#include <lvgl.h>
+
+// Project headers
 #include "../secrets.h"
 
 // Weather data structure

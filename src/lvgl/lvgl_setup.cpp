@@ -1,3 +1,4 @@
+// Own header
 #include "lvgl_setup.h"
 
 // Global objects

@@ -1,10 +1,13 @@
+// System libraries
 #include <Arduino.h>
+
+// Project headers
 #include "config.h"
 #include "lvgl/lvgl_setup.h"
 #include "ui/ui_main.h"
-#include "wifi/wifi_setup.h"
-#include "weather/weather_api.h"
 #include "ui/ui_weather.h"
+#include "weather/weather_api.h"
+#include "wifi/wifi_setup.h"
 
 // Global objects
 WiFiSetup *wifi_setup;

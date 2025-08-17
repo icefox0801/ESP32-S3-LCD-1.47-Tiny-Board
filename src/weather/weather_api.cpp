@@ -1,3 +1,4 @@
+// Own header
 #include "weather_api.h"
 
 WeatherAPI::WeatherAPI()

@@ -1,4 +1,7 @@
+// System libraries
 #include <Arduino.h>
+
+// Own header
 #include "ui_main.h"
 
 // Global UI objects

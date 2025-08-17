@@ -1,7 +1,7 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-// Include sensitive configuration
+// Project headers
 #include "secrets.h"
 
 // Weather Update Settings

@@ -1,6 +1,7 @@
 #ifndef UI_MAIN_H
 #define UI_MAIN_H
 
+// Third-party libraries
 #include <lvgl.h>
 
 // UI Function declarations

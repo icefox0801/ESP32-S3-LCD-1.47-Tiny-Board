@@ -1,8 +1,11 @@
 #ifndef UI_WEATHER_H
 #define UI_WEATHER_H
 
-#include "lvgl.h"
-#include "misc/lv_timer.h"
+// Third-party libraries
+#include <lvgl.h>
+#include <misc/lv_timer.h>
+
+// Project headers
 #include "../weather/weather_api.h"
 
 class WeatherUI

@@ -1,10 +1,13 @@
 #ifndef LVGL_SETUP_H
 #define LVGL_SETUP_H
 
+// System libraries
 #include <Arduino.h>
+#include <SPI.h>
+
+// Third-party libraries
 #include <Adafruit_GFX.h>
 #include <Adafruit_ST7789.h>
-#include <SPI.h>
 #include <lvgl.h>
 
 // ESP32-S3-LCD-1.47-Tiny-Board display pins
