@@ -61,5 +61,7 @@
   // Files settings
   "files.insertFinalNewline": true,
   "files.trimTrailingWhitespace": true,
-  "files.trimFinalNewlines": true
+  "files.trimFinalNewlines": true,
+  // Extension settings
+  "extensions.ignoreRecommendations": true,
 }

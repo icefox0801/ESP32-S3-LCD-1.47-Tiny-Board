@@ -116,7 +116,7 @@ Add dependencies to `platformio.ini`:
 platform = espressif32
 board = esp32s3box
 framework = arduino
-lib_deps = 
+lib_deps =
     adafruit/Adafruit GFX Library
     adafruit/Adafruit ST7735 and ST7789 Library
 ```
