@@ -74,12 +74,13 @@ src/
 ├── secrets_example.h        # Template for credentials
 ├── lvgl/                    # LVGL display system
 │   ├── lvgl_setup.h/.cpp   # Display initialization
-│   └── lvgl_ui.h/.cpp      # Advanced UI components
+├── ui/                      # User interface components
+│   ├── ui_main.h/.cpp      # Main UI components
+│   └── ui_weather.h/.cpp   # Weather display UI
 ├── wifi/                    # WiFi management
 │   ├── wifi_setup.h/.cpp   # WiFi connection handling
 └── weather/                 # Weather integration
-    ├── weather_api.h/.cpp  # Home Assistant API client
-    └── weather_ui.h/.cpp   # Weather display UI
+    └── weather_api.h/.cpp  # Home Assistant API client
 ```
 
 ## ⚙️ Detailed Configuration
@@ -205,12 +206,12 @@ The system displays weather information from Home Assistant's `weather.forecast_
 ## 🔧 Advanced Development
 
 ### Adding Custom UI Components
-1. Declare function in `src/lvgl/lvgl_ui.h`
-2. Implement function in `src/lvgl/lvgl_ui.cpp`
+1. Declare function in `src/ui/ui_main.h`
+2. Implement function in `src/ui/ui_main.cpp`
 3. Call from main application or weather display
 
 ### Creating New Screens
-1. Create screen object in `lvgl_ui.cpp`
+1. Create screen object in `ui_main.cpp`
 2. Add creation function following existing patterns
 3. Use `ui_switch_to_screen()` for navigation
 4. Add event handlers for user interaction
@@ -223,7 +224,7 @@ The system displays weather information from Home Assistant's `weather.forecast_
 
 ### Weather Data Customization
 - Modify `weather_api.cpp` to fetch additional entities
-- Update `weather_ui.cpp` to display new data fields
+- Update `ui_weather.cpp` to display new data fields
 - Add custom weather icons or animations
 - Implement forecast data display
 

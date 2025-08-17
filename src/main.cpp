@@ -1,10 +1,10 @@
 #include <Arduino.h>
 #include "config.h"
 #include "lvgl/lvgl_setup.h"
-#include "lvgl/lvgl_ui.h"
+#include "ui/ui_main.h"
 #include "wifi/wifi_setup.h"
 #include "weather/weather_api.h"
-#include "weather/weather_ui.h"
+#include "ui/ui_weather.h"
 
 // Global objects
 WiFiSetup *wifi_setup;
