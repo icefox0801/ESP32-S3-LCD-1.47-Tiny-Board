@@ -1,0 +1,65 @@
+{
+  // Editor settings
+  "editor.insertSpaces": true,
+  "editor.tabSize": 2,
+  "editor.indentSize": 2,
+  "editor.detectIndentation": false,
+  // Language-specific settings
+  "[cpp]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.indentSize": 2
+  },
+  "[c]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.indentSize": 2
+  },
+  "[h]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.indentSize": 2
+  },
+  "[hpp]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.indentSize": 2
+  },
+  "[json]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.indentSize": 2
+  },
+  "[jsonc]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.indentSize": 2
+  },
+  "[ini]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.indentSize": 2
+  },
+  "[yaml]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.indentSize": 2
+  },
+  "[yml]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.indentSize": 2
+  },
+  "[markdown]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.indentSize": 2
+  },
+  // Auto-format on save
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": true,
+  // Files settings
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  "files.trimFinalNewlines": true
+}
