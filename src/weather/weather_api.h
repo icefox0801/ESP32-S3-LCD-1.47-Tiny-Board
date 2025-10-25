@@ -10,7 +10,7 @@
 #include <lvgl.h>
 
 // Project headers
-#include "../secrets.h"
+#include "secrets.h"
 
 // Weather data structure
 struct WeatherData

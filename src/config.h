@@ -2,7 +2,7 @@
 #define CONFIG_H
 
 // Project headers
-#include "secrets.h"
+#include "weather/secrets.h"
 
 // Weather Update Settings
 #define WEATHER_UPDATE_INTERVAL_MS 60000    // Update every 60 seconds

@@ -5,5 +5,5 @@
 .vscode/ipch
 
 # Secrets (contains sensitive credentials)
-src/secrets.h
+src/weather/secrets.h
 src/wifi/wifi_secrets.h
