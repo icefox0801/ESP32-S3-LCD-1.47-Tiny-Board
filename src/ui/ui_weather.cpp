@@ -44,14 +44,10 @@ WeatherUI::WeatherUI(WeatherAPI *api) : weather_api(api)
 
 void WeatherUI::createWeatherScreen()
 {
-  Serial.println("[WeatherUI] Creating weather screen...");
-
   createScreenBase();
   createTitleLabel();
   createUpperCard();
   createLowerCard();
-
-  Serial.println("[WeatherUI] Weather screen created successfully");
 }
 
 void WeatherUI::createScreenBase()
@@ -88,7 +84,7 @@ void WeatherUI::createUpperCard()
   main_card = lv_obj_create(weather_container);
   lv_obj_set_size(main_card, LV_HOR_RES - 30, 165);
   lv_obj_align(main_card, LV_ALIGN_TOP_MID, 0, 40);
-  lv_obj_set_style_bg_color(main_card, lv_color_hex(0x522c8c), LV_PART_MAIN); // Purple to match icon background
+  lv_obj_set_style_bg_color(main_card, lv_color_hex(0x502C88), LV_PART_MAIN); // Match icon background (RGB565 0x5171 converted to RGB888)
   lv_obj_set_style_border_width(main_card, 0, LV_PART_MAIN);
   lv_obj_set_style_radius(main_card, 15, LV_PART_MAIN);
   lv_obj_set_style_pad_all(main_card, 8, LV_PART_MAIN);
@@ -126,7 +122,7 @@ void WeatherUI::createLowerCard()
   info_card = lv_obj_create(weather_container);
   lv_obj_set_size(info_card, LV_HOR_RES - 30, 95);
   lv_obj_align(info_card, LV_ALIGN_TOP_MID, 0, 215);
-  lv_obj_set_style_bg_color(info_card, lv_color_hex(0x4caf50), LV_PART_MAIN);
+  lv_obj_set_style_bg_color(info_card, lv_color_hex(0x2e7d32), LV_PART_MAIN); // Darker green
   lv_obj_set_style_border_width(info_card, 0, LV_PART_MAIN);
   lv_obj_set_style_radius(info_card, 15, LV_PART_MAIN);
   lv_obj_set_style_pad_all(info_card, 8, LV_PART_MAIN);
@@ -216,17 +212,14 @@ void WeatherUI::updateWeatherDisplay()
     // Update low/high temperature range in "X - Y°" format
     String temp_range = String((int)weather.temp_low) + " - " + String((int)weather.temp_high) + "°";
     lv_label_set_text(temp_low_label, temp_range.c_str());
-
-    Serial.println("[WeatherUI] Weather display updated with icon");
   }
   else
   {
-    // Show error state - image stays the same
+    // Show error state
     lv_label_set_text(title_label, "Weather");
     lv_label_set_text(temperature_label, "--°");
     lv_label_set_text(humidity_info_label, "--");
     lv_label_set_text(wind_info_label, "--");
-    Serial.println("[WeatherUI] Error: No valid weather data");
   }
 }
 
@@ -235,7 +228,6 @@ void WeatherUI::showWeatherScreen()
   if (weather_screen)
   {
     lv_scr_load(weather_screen);
-    Serial.println("[WeatherUI] Weather screen shown");
   }
 }
 
@@ -253,8 +245,7 @@ void WeatherUI::startAutoUpdate()
 {
   if (!update_timer)
   {
-    update_timer = lv_timer_create(update_timer_cb, 300000, this); // Update every 5 minutes
-    Serial.println("[WeatherUI] Auto-update timer started");
+    update_timer = lv_timer_create(update_timer_cb, 300000, this);
   }
 }
 
@@ -264,7 +255,6 @@ void WeatherUI::stopAutoUpdate()
   {
     lv_timer_del(update_timer);
     update_timer = nullptr;
-    Serial.println("[WeatherUI] Auto-update timer stopped");
   }
 }
 
@@ -276,19 +266,11 @@ void WeatherUI::update_timer_cb(lv_timer_t *timer)
 
 void WeatherUI::handleUpdateTimer()
 {
-  Serial.println("[WeatherUI] Auto-update triggered");
-
-  // Fetch new weather data
   if (weather_api && weather_api->needsUpdate())
   {
-    Serial.println("[WeatherUI] Fetching fresh weather data...");
     if (weather_api->fetchWeatherData())
     {
       updateWeatherDisplay();
-    }
-    else
-    {
-      Serial.println("[WeatherUI] Failed to fetch weather data");
     }
   }
 }

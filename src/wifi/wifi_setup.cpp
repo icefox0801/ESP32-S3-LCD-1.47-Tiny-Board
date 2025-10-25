@@ -7,20 +7,14 @@ WiFiSetup::WiFiSetup()
 
 bool WiFiSetup::init()
 {
-  Serial.println("[WiFi] Initializing WiFi...");
-
   WiFi.mode(WIFI_STA);
   WiFi.setAutoReconnect(true);
   WiFi.persistent(true);
-
-  Serial.println("[WiFi] WiFi initialized");
   return true;
 }
 
 bool WiFiSetup::connect()
 {
-  Serial.println("[WiFi] Connecting to WiFi network: " + ssid);
-
   WiFi.begin(ssid.c_str(), password.c_str());
 
   unsigned long start_time = millis();
@@ -28,24 +22,9 @@ bool WiFiSetup::connect()
   while (WiFi.status() != WL_CONNECTED && (millis() - start_time) < connection_timeout)
   {
     delay(500);
-    Serial.print(".");
   }
 
-  if (WiFi.status() == WL_CONNECTED)
-  {
-    Serial.println();
-    Serial.println("[WiFi] WiFi connected successfully!");
-    Serial.println("[WiFi] IP address: " + getIPAddress());
-    Serial.println("[WiFi] Signal strength: " + String(getRSSI()) + " dBm (" + String(getSignalStrength()) + "%)");
-    return true;
-  }
-  else
-  {
-    Serial.println();
-    Serial.println("[WiFi] WiFi connection failed!");
-    Serial.println("[WiFi] Status: " + getStatusString());
-    return false;
-  }
+  return WiFi.status() == WL_CONNECTED;
 }
 
 bool WiFiSetup::isConnected()
@@ -89,7 +68,6 @@ void WiFiSetup::handleReconnect()
 {
   if (!isConnected() && (millis() - last_retry) > retry_interval)
   {
-    Serial.println("[WiFi] Connection lost, attempting to reconnect...");
     last_retry = millis();
     connect();
   }

@@ -40,7 +40,6 @@ void lvgl_setup_display();
 void lvgl_setup_spi();
 void lvgl_setup_backlight();
 void lvgl_init_display();
-void lvgl_create_demo_ui();
 void my_disp_flush(lv_display_t *disp_drv, const lv_area_t *area, uint8_t *px_map);
 
 // Main setup function
