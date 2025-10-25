@@ -32,6 +32,9 @@ public:
 
   // Get display name for weather state
   static const char *getStateDisplayName(const String &state);
+
+  // Get LVGL image descriptor for weather state
+  static const lv_image_dsc_t *getIconImage(const String &state);
 };
 
 #endif // WEATHER_ICONS_H

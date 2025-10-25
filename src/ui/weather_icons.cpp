@@ -1,6 +1,23 @@
 #include "weather_icons.h"
 #include <Arduino.h>
 
+// Include all weather icon headers
+#include "icons/sunny_icon_64.h"
+#include "icons/clear_night_icon_64.h"
+#include "icons/partly_cloudy_icon_64.h"
+#include "icons/cloudy_icon_64.h"
+#include "icons/rainy_icon_64.h"
+#include "icons/pouring_icon_64.h"
+#include "icons/snowy_icon_64.h"
+#include "icons/snowy_rainy_icon_64.h"
+#include "icons/fog_icon_64.h"
+#include "icons/hail_icon_64.h"
+#include "icons/windy_icon_64.h"
+#include "icons/lightning_icon_64.h"
+#include "icons/lightning_rainy_icon_64.h"
+#include "icons/exceptional_icon_64.h"
+#include "icons/overcast_icon_64.h"
+
 const char *WeatherIcons::getIconText(WeatherIcon icon)
 {
   switch (icon)
@@ -139,5 +156,70 @@ const char *WeatherIcons::getStateDisplayName(const String &state)
   else
   {
     return "Unknown";
+  }
+}
+
+const lv_image_dsc_t *WeatherIcons::getIconImage(const String &state)
+{
+  if (state == "sunny" || state == "clear")
+  {
+    return &sunny_icon_64;
+  }
+  else if (state == "partlycloudy")
+  {
+    return &partly_cloudy_icon_64;
+  }
+  else if (state == "cloudy")
+  {
+    return &cloudy_icon_64;
+  }
+  else if (state == "rainy")
+  {
+    return &rainy_icon_64;
+  }
+  else if (state == "pouring")
+  {
+    return &pouring_icon_64;
+  }
+  else if (state == "snowy")
+  {
+    return &snowy_icon_64;
+  }
+  else if (state == "snowy-rainy")
+  {
+    return &snowy_rainy_icon_64;
+  }
+  else if (state == "fog")
+  {
+    return &fog_icon_64;
+  }
+  else if (state == "hail")
+  {
+    return &hail_icon_64;
+  }
+  else if (state == "windy")
+  {
+    return &windy_icon_64;
+  }
+  else if (state == "lightning")
+  {
+    return &lightning_icon_64;
+  }
+  else if (state == "lightning-rainy")
+  {
+    return &lightning_rainy_icon_64;
+  }
+  else if (state == "clear-night")
+  {
+    return &clear_night_icon_64;
+  }
+  else if (state == "exceptional")
+  {
+    return &exceptional_icon_64;
+  }
+  else
+  {
+    // Default to sunny if unknown
+    return &sunny_icon_64;
   }
 }
