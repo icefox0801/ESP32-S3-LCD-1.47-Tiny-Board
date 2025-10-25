@@ -101,34 +101,50 @@ bool WeatherAPI::needsUpdate()
 
 const char *WeatherAPI::getWeatherIcon(const String &weather_state)
 {
-  // Map weather states to LVGL symbol icons
+  // Map weather states to text descriptions
   if (weather_state == "sunny" || weather_state == "clear")
   {
-    return LV_SYMBOL_PLUS; // ☀️ Use plus as sun symbol
+    return "SUNNY";
   }
-  else if (weather_state == "cloudy" || weather_state == "partlycloudy")
+  else if (weather_state == "partlycloudy")
   {
-    return LV_SYMBOL_CLOSE; // ☁️ Use close as cloud symbol
+    return "PARTLY CLOUDY";
   }
-  else if (weather_state == "rainy" || weather_state == "pouring")
+  else if (weather_state == "cloudy")
   {
-    return LV_SYMBOL_REFRESH; // 🌧️ Use refresh as rain symbol
+    return "CLOUDY";
   }
-  else if (weather_state == "snowy")
+  else if (weather_state == "rainy")
   {
-    return LV_SYMBOL_MINUS; // ❄️ Use minus as snow symbol
+    return "RAINY";
   }
-  else if (weather_state == "fog")
+  else if (weather_state == "pouring")
   {
-    return LV_SYMBOL_SETTINGS; // 🌫️ Use settings as fog symbol
+    return "HEAVY RAIN";
+  }
+  else if (weather_state == "snowy" || weather_state == "snowy-rainy")
+  {
+    return "SNOWY";
+  }
+  else if (weather_state == "fog" || weather_state == "hail")
+  {
+    return "FOGGY";
   }
   else if (weather_state == "windy")
   {
-    return LV_SYMBOL_LOOP; // 💨 Use loop as wind symbol
+    return "WINDY";
+  }
+  else if (weather_state == "lightning" || weather_state == "lightning-rainy")
+  {
+    return "STORM";
+  }
+  else if (weather_state == "exceptional")
+  {
+    return "ALERT";
   }
   else
   {
-    return LV_SYMBOL_DUMMY; // Default symbol
+    return "LOADING";
   }
 }
 
