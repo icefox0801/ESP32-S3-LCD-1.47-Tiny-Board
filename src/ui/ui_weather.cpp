@@ -82,7 +82,7 @@ void WeatherUI::createUpperCard()
 {
   // === UPPER CARD: Weather & Temperature ===
   main_card = lv_obj_create(weather_container);
-  lv_obj_set_size(main_card, LV_HOR_RES - 30, 165);
+  lv_obj_set_size(main_card, LV_HOR_RES - 20, 165);
   lv_obj_align(main_card, LV_ALIGN_TOP_MID, 0, 40);
   lv_obj_set_style_bg_color(main_card, lv_color_hex(0x29006b), LV_PART_MAIN); // Match icon background (RGB565 0x280d)
   lv_obj_set_style_border_width(main_card, 0, LV_PART_MAIN);
@@ -120,7 +120,7 @@ void WeatherUI::createLowerCard()
 {
   // === LOWER CARD: Humidity & Wind Info ===
   info_card = lv_obj_create(weather_container);
-  lv_obj_set_size(info_card, LV_HOR_RES - 30, 95);
+  lv_obj_set_size(info_card, LV_HOR_RES - 20, 105);
   lv_obj_align(info_card, LV_ALIGN_TOP_MID, 0, 215);
   lv_obj_set_style_bg_color(info_card, lv_color_hex(0x004d40), LV_PART_MAIN); // Dark teal-green
   lv_obj_set_style_border_width(info_card, 0, LV_PART_MAIN);
