@@ -6,3 +6,4 @@
 
 # Secrets (contains sensitive credentials)
 src/secrets.h
+src/wifi/wifi_secrets.h

@@ -1,8 +1,7 @@
 // Own header
 #include "wifi_setup.h"
 
-WiFiSetup::WiFiSetup(const String &wifi_ssid, const String &wifi_password)
-    : ssid(wifi_ssid), password(wifi_password)
+WiFiSetup::WiFiSetup()
 {
 }
 

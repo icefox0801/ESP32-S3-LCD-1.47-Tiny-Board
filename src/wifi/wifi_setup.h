@@ -4,17 +4,20 @@
 // System libraries
 #include <WiFi.h>
 
+// Own WiFi credentials
+#include "wifi_secrets.h"
+
 class WiFiSetup
 {
 private:
-  String ssid;
-  String password;
+  String ssid = WIFI_SSID;
+  String password = WIFI_PASSWORD;
   unsigned long connection_timeout = 20000; // 20 seconds
   unsigned long retry_interval = 30000;     // 30 seconds between retries
   unsigned long last_retry = 0;
 
 public:
-  WiFiSetup(const String &wifi_ssid, const String &wifi_password);
+  WiFiSetup();
 
   // Initialize WiFi connection
   bool init();

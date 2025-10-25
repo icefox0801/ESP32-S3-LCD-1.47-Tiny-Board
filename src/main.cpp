@@ -28,7 +28,7 @@ void setup()
   lvgl_setup();
 
   // Initialize WiFi
-  wifi_setup = new WiFiSetup(WIFI_SSID, WIFI_PASSWORD);
+  wifi_setup = new WiFiSetup();
   wifi_setup->init();
 
   // Connect to WiFi
