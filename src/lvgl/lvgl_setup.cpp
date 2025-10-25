@@ -76,15 +76,6 @@ void lvgl_create_demo_ui()
   lv_obj_set_style_radius(label, 10, 0);
   lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
 
-  // Create a button
-  lv_obj_t *btn = lv_button_create(lv_screen_active());
-  lv_obj_set_size(btn, 120, 50);
-  lv_obj_align(btn, LV_ALIGN_BOTTOM_MID, 0, -30);
-
-  lv_obj_t *btn_label = lv_label_create(btn);
-  lv_label_set_text(btn_label, "Click Me!");
-  lv_obj_center(btn_label);
-
   // Force a display refresh
   lv_refr_now(disp);
 
