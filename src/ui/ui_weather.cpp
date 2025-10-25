@@ -144,7 +144,7 @@ void WeatherUI::createLowerCard()
   lv_label_set_text(humidity_unit_label, "%");
   lv_obj_set_style_text_font(humidity_unit_label, &lv_font_montserrat_16, LV_PART_MAIN);
   lv_obj_set_style_text_color(humidity_unit_label, lv_color_hex(0xe8f5e9), LV_PART_MAIN);
-  lv_obj_align_to(humidity_unit_label, humidity_icon_img, LV_ALIGN_BOTTOM_LEFT, 72, 4);
+  lv_obj_align_to(humidity_unit_label, humidity_icon_img, LV_ALIGN_BOTTOM_LEFT, 80, 4);
 
   // Humidity value in lower card (anchored to left of unit label)
   humidity_info_label = lv_label_create(info_card);
@@ -167,7 +167,7 @@ void WeatherUI::createLowerCard()
   lv_label_set_text(wind_unit_label, "km/h");
   lv_obj_set_style_text_font(wind_unit_label, &lv_font_montserrat_14, LV_PART_MAIN);
   lv_obj_set_style_text_color(wind_unit_label, lv_color_hex(0xe8f5e9), LV_PART_MAIN);
-  lv_obj_align_to(wind_unit_label, wind_icon_img, LV_ALIGN_BOTTOM_LEFT, 72, 4);
+  lv_obj_align_to(wind_unit_label, wind_icon_img, LV_ALIGN_BOTTOM_LEFT, 80, 4);
 
   // Wind value in lower card (anchored to left of unit label, aligned with humidity value)
   wind_info_label = lv_label_create(info_card);
