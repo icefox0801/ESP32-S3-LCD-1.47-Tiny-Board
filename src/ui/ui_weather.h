@@ -7,6 +7,7 @@
 
 // Project headers
 #include "../weather/weather_api.h"
+#include "weather_icons.h"
 
 class WeatherUI
 {
@@ -16,7 +17,9 @@ private:
   lv_obj_t *main_card;
   lv_obj_t *info_card;
   lv_obj_t *title_label;
-  lv_obj_t *weather_icon_label;
+  lv_obj_t *weather_icon_img;
+  lv_obj_t *weather_icon_canvas;
+  lv_color_t *icon_canvas_buf;
   lv_obj_t *temperature_label;
   lv_obj_t *humidity_icon_img;
   lv_obj_t *humidity_info_label;

@@ -4,6 +4,10 @@
 .vscode/launch.json
 .vscode/ipch
 
+# Python
+__pycache__/
+*.pyc
+
 # Secrets (contains sensitive credentials)
 src/weather/secrets.h
 src/wifi/wifi_secrets.h

@@ -1,6 +1,24 @@
 // Own header
 #include "ui_weather.h"
 
+// Weather icon headers
+#include "icons/sunny_icon_64.h"
+#include "icons/clear_night_icon_64.h"
+#include "icons/partly_cloudy_icon_64.h"
+#include "icons/cloudy_icon_64.h"
+#include "icons/overcast_icon_64.h"
+#include "icons/fog_icon_64.h"
+#include "icons/haze_icon_64.h"
+#include "icons/windy_icon_64.h"
+#include "icons/rainy_icon_64.h"
+#include "icons/pouring_icon_64.h"
+#include "icons/snowy_icon_64.h"
+#include "icons/snowy_rainy_icon_64.h"
+#include "icons/lightning_icon_64.h"
+#include "icons/lightning_rainy_icon_64.h"
+#include "icons/hail_icon_64.h"
+#include "icons/exceptional_icon_64.h"
+
 WeatherUI::WeatherUI(WeatherAPI *api) : weather_api(api)
 {
   weather_screen = nullptr;
@@ -8,7 +26,9 @@ WeatherUI::WeatherUI(WeatherAPI *api) : weather_api(api)
   main_card = nullptr;
   info_card = nullptr;
   title_label = nullptr;
-  weather_icon_label = nullptr;
+  weather_icon_img = nullptr;
+  weather_icon_canvas = nullptr;
+  icon_canvas_buf = nullptr;
   temperature_label = nullptr;
   humidity_icon_img = nullptr;
   humidity_info_label = nullptr;
@@ -54,11 +74,11 @@ void WeatherUI::createScreenBase()
 
 void WeatherUI::createTitleLabel()
 {
-  // Title at top - "Weather"
+  // Weather state label at top (will be updated with actual state)
   title_label = lv_label_create(weather_container);
   lv_label_set_text(title_label, "Weather");
   lv_obj_set_style_text_font(title_label, &lv_font_montserrat_14, LV_PART_MAIN);
-  lv_obj_set_style_text_color(title_label, lv_color_hex(0xb0b0b0), LV_PART_MAIN);
+  lv_obj_set_style_text_color(title_label, lv_color_hex(0x1976d2), LV_PART_MAIN); // Darker blue for clarity
   lv_obj_align(title_label, LV_ALIGN_TOP_MID, 0, 15);
 }
 
@@ -68,7 +88,7 @@ void WeatherUI::createUpperCard()
   main_card = lv_obj_create(weather_container);
   lv_obj_set_size(main_card, LV_HOR_RES - 30, 165);
   lv_obj_align(main_card, LV_ALIGN_TOP_MID, 0, 40);
-  lv_obj_set_style_bg_color(main_card, lv_color_hex(0x42a5f5), LV_PART_MAIN);
+  lv_obj_set_style_bg_color(main_card, lv_color_hex(0x522c8c), LV_PART_MAIN); // Purple to match icon background
   lv_obj_set_style_border_width(main_card, 0, LV_PART_MAIN);
   lv_obj_set_style_radius(main_card, 15, LV_PART_MAIN);
   lv_obj_set_style_pad_all(main_card, 8, LV_PART_MAIN);
@@ -77,22 +97,17 @@ void WeatherUI::createUpperCard()
   lv_obj_set_style_shadow_opa(main_card, LV_OPA_30, LV_PART_MAIN);
   lv_obj_clear_flag(main_card, LV_OBJ_FLAG_SCROLLABLE);
 
-  // Weather status - top of upper card
-  weather_icon_label = lv_label_create(main_card);
-  lv_label_set_text(weather_icon_label, "LOADING");
-  lv_label_set_long_mode(weather_icon_label, LV_LABEL_LONG_WRAP);
-  lv_obj_set_width(weather_icon_label, LV_HOR_RES - 60);
-  lv_obj_set_style_text_align(weather_icon_label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
-  lv_obj_set_style_text_font(weather_icon_label, &lv_font_montserrat_16, LV_PART_MAIN);
-  lv_obj_set_style_text_color(weather_icon_label, lv_color_hex(0xe3f2fd), LV_PART_MAIN);
-  lv_obj_align(weather_icon_label, LV_ALIGN_TOP_MID, 0, 8);
+  // Weather icon - top of upper card (using actual image)
+  weather_icon_img = lv_img_create(main_card);
+  lv_img_set_src(weather_icon_img, &sunny_icon_64);
+  lv_obj_align(weather_icon_img, LV_ALIGN_TOP_MID, 0, 0);
 
   // Large temperature - center of upper card
   temperature_label = lv_label_create(main_card);
   lv_label_set_text(temperature_label, "--°");
   lv_obj_set_style_text_font(temperature_label, &lv_font_montserrat_48, LV_PART_MAIN);
   lv_obj_set_style_text_color(temperature_label, lv_color_hex(0xffffff), LV_PART_MAIN);
-  lv_obj_align(temperature_label, LV_ALIGN_CENTER, 0, 3);
+  lv_obj_align(temperature_label, LV_ALIGN_CENTER, 0, 15);
 
   // Low/High temperature range - bottom center of upper card
   temp_low_label = lv_label_create(main_card);
@@ -176,9 +191,12 @@ void WeatherUI::updateWeatherDisplay()
 
   if (weather.valid)
   {
-    // Update weather status text
-    const char *icon = weather_api->getWeatherIcon(weather.state);
-    lv_label_set_text(weather_icon_label, icon);
+    // Update weather state title
+    const char *stateName = WeatherIcons::getStateDisplayName(weather.state);
+    lv_label_set_text(title_label, stateName);
+
+    // Icon is now displayed as static image (sunny_icon_64)
+    // In the future, you can change the icon based on weather.state
 
     // Update temperature
     String temp_str = String((int)weather.temperature) + "°";
@@ -199,13 +217,12 @@ void WeatherUI::updateWeatherDisplay()
     String temp_range = String((int)weather.temp_low) + " - " + String((int)weather.temp_high) + "°";
     lv_label_set_text(temp_low_label, temp_range.c_str());
 
-    Serial.println("[WeatherUI] Weather display updated - " + String(icon));
+    Serial.println("[WeatherUI] Weather display updated with icon");
   }
   else
   {
-    // Show error state
-    lv_label_set_text(weather_icon_label, "ERROR");
-    lv_obj_set_style_text_color(weather_icon_label, lv_color_hex(0xff4444), LV_PART_MAIN);
+    // Show error state - image stays the same
+    lv_label_set_text(title_label, "Weather");
     lv_label_set_text(temperature_label, "--°");
     lv_label_set_text(humidity_info_label, "--");
     lv_label_set_text(wind_info_label, "--");
@@ -236,7 +253,7 @@ void WeatherUI::startAutoUpdate()
 {
   if (!update_timer)
   {
-    update_timer = lv_timer_create(update_timer_cb, 30000, this); // Update every 30 seconds
+    update_timer = lv_timer_create(update_timer_cb, 300000, this); // Update every 5 minutes
     Serial.println("[WeatherUI] Auto-update timer started");
   }
 }

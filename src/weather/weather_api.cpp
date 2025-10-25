@@ -45,6 +45,8 @@ bool WeatherAPI::fetchWeatherData()
   Serial.println("[Weather] Weather data updated successfully:");
   Serial.println("  State: " + current_weather.state);
   Serial.println("  Temperature: " + String(current_weather.temperature) + current_weather.temperature_unit);
+  Serial.println("  Temp High: " + String(current_weather.temp_high) + current_weather.temperature_unit);
+  Serial.println("  Temp Low: " + String(current_weather.temp_low) + current_weather.temperature_unit);
   Serial.println("  Humidity: " + String(current_weather.humidity) + "%");
   Serial.println("  Pressure: " + String(current_weather.pressure) + " " + current_weather.pressure_unit);
   Serial.println("  Wind: " + String(current_weather.wind_speed) + " " + current_weather.wind_speed_unit);
