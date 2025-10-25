@@ -84,7 +84,7 @@ void WeatherUI::createUpperCard()
   main_card = lv_obj_create(weather_container);
   lv_obj_set_size(main_card, LV_HOR_RES - 30, 165);
   lv_obj_align(main_card, LV_ALIGN_TOP_MID, 0, 40);
-  lv_obj_set_style_bg_color(main_card, lv_color_hex(0x502C88), LV_PART_MAIN); // Match icon background (RGB565 0x5171 converted to RGB888)
+  lv_obj_set_style_bg_color(main_card, lv_color_hex(0x29006b), LV_PART_MAIN); // Match icon background (RGB565 0x280d)
   lv_obj_set_style_border_width(main_card, 0, LV_PART_MAIN);
   lv_obj_set_style_radius(main_card, 15, LV_PART_MAIN);
   lv_obj_set_style_pad_all(main_card, 8, LV_PART_MAIN);
@@ -191,8 +191,9 @@ void WeatherUI::updateWeatherDisplay()
     const char *stateName = WeatherIcons::getStateDisplayName(weather.state);
     lv_label_set_text(title_label, stateName);
 
-    // Icon is now displayed as static image (sunny_icon_64)
-    // In the future, you can change the icon based on weather.state
+    // Update weather icon based on current state
+    const lv_image_dsc_t *icon = WeatherIcons::getIconImage(weather.state);
+    lv_img_set_src(weather_icon_img, icon);
 
     // Update temperature
     String temp_str = String((int)weather.temperature) + "°";
