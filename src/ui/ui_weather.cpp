@@ -83,7 +83,7 @@ void WeatherUI::createUpperCard()
   lv_label_set_long_mode(weather_icon_label, LV_LABEL_LONG_WRAP);
   lv_obj_set_width(weather_icon_label, LV_HOR_RES - 60);
   lv_obj_set_style_text_align(weather_icon_label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
-  lv_obj_set_style_text_font(weather_icon_label, &lv_font_montserrat_14, LV_PART_MAIN);
+  lv_obj_set_style_text_font(weather_icon_label, &lv_font_montserrat_16, LV_PART_MAIN);
   lv_obj_set_style_text_color(weather_icon_label, lv_color_hex(0xe3f2fd), LV_PART_MAIN);
   lv_obj_align(weather_icon_label, LV_ALIGN_TOP_MID, 0, 8);
 
@@ -131,14 +131,14 @@ void WeatherUI::createLowerCard()
   // Humidity unit label (smaller, right-aligned) - position first as anchor
   humidity_unit_label = lv_label_create(info_card);
   lv_label_set_text(humidity_unit_label, "%");
-  lv_obj_set_style_text_font(humidity_unit_label, &lv_font_montserrat_14, LV_PART_MAIN);
+  lv_obj_set_style_text_font(humidity_unit_label, &lv_font_montserrat_16, LV_PART_MAIN);
   lv_obj_set_style_text_color(humidity_unit_label, lv_color_hex(0xe8f5e9), LV_PART_MAIN);
   lv_obj_align_to(humidity_unit_label, humidity_icon_img, LV_ALIGN_BOTTOM_LEFT, 72, 4);
 
   // Humidity value in lower card (anchored to left of unit label)
   humidity_info_label = lv_label_create(info_card);
   lv_label_set_text(humidity_info_label, "--");
-  lv_obj_set_style_text_font(humidity_info_label, &lv_font_montserrat_24, LV_PART_MAIN);
+  lv_obj_set_style_text_font(humidity_info_label, &lv_font_montserrat_26, LV_PART_MAIN);
   lv_obj_set_style_text_color(humidity_info_label, lv_color_hex(0xffffff), LV_PART_MAIN);
   lv_obj_set_style_text_align(humidity_info_label, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN);
   lv_obj_align(humidity_info_label, LV_ALIGN_TOP_RIGHT, -56, 4);
@@ -161,7 +161,7 @@ void WeatherUI::createLowerCard()
   // Wind value in lower card (anchored to left of unit label, aligned with humidity value)
   wind_info_label = lv_label_create(info_card);
   lv_label_set_text(wind_info_label, "--");
-  lv_obj_set_style_text_font(wind_info_label, &lv_font_montserrat_24, LV_PART_MAIN);
+  lv_obj_set_style_text_font(wind_info_label, &lv_font_montserrat_26, LV_PART_MAIN);
   lv_obj_set_style_text_color(wind_info_label, lv_color_hex(0xffffff), LV_PART_MAIN);
   lv_obj_set_style_text_align(wind_info_label, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN);
   lv_obj_align(wind_info_label, LV_ALIGN_TOP_RIGHT, -56, 46);
