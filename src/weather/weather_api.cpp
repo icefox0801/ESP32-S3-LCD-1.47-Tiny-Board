@@ -26,11 +26,39 @@ bool WeatherAPI::fetchWeatherData()
     return false;
   }
 
+  // Fetch current weather state
+  if (!fetchCurrentWeather())
+  {
+    return false;
+  }
+
+  // Fetch forecast data for high/low temperatures
+  if (!fetchForecastData())
+  {
+    // Use current temperature as fallback
+    setFallbackForecast();
+  }
+
+  current_weather.valid = true;
+  last_update = millis();
+
+  Serial.println("[Weather] Weather data updated successfully:");
+  Serial.println("  State: " + current_weather.state);
+  Serial.println("  Temperature: " + String(current_weather.temperature) + current_weather.temperature_unit);
+  Serial.println("  Humidity: " + String(current_weather.humidity) + "%");
+  Serial.println("  Pressure: " + String(current_weather.pressure) + " " + current_weather.pressure_unit);
+  Serial.println("  Wind: " + String(current_weather.wind_speed) + " " + current_weather.wind_speed_unit);
+
+  return true;
+}
+
+bool WeatherAPI::fetchCurrentWeather()
+{
   HTTPClient http;
   String url = "http://" + config.server_ip + ":" + String(config.server_port) +
                "/api/states/" + config.weather_entity;
 
-  Serial.println("[Weather] Fetching weather data from: " + url);
+  Serial.println("[Weather] Fetching current weather from: " + url);
 
   http.begin(url);
   http.addHeader("Authorization", "Bearer " + config.bearer_token);
@@ -38,55 +66,115 @@ bool WeatherAPI::fetchWeatherData()
 
   int httpResponseCode = http.GET();
 
-  if (httpResponseCode == 200)
-  {
-    String payload = http.getString();
-    Serial.println("[Weather] Response received, parsing JSON...");
-
-    // Parse JSON response
-    JsonDocument doc;
-    DeserializationError error = deserializeJson(doc, payload);
-
-    if (error)
-    {
-      Serial.println("[Weather] JSON parsing failed: " + String(error.c_str()));
-      http.end();
-      return false;
-    }
-
-    // Extract weather data
-    current_weather.state = doc["state"].as<String>();
-    current_weather.temperature = doc["attributes"]["temperature"].as<float>();
-    current_weather.temperature_unit = doc["attributes"]["temperature_unit"].as<String>();
-    current_weather.humidity = doc["attributes"]["humidity"].as<int>();
-    current_weather.cloud_coverage = doc["attributes"]["cloud_coverage"].as<float>();
-    current_weather.uv_index = doc["attributes"]["uv_index"].as<float>();
-    current_weather.pressure = doc["attributes"]["pressure"].as<float>();
-    current_weather.pressure_unit = doc["attributes"]["pressure_unit"].as<String>();
-    current_weather.wind_bearing = doc["attributes"]["wind_bearing"].as<float>();
-    current_weather.wind_speed = doc["attributes"]["wind_speed"].as<float>();
-    current_weather.wind_speed_unit = doc["attributes"]["wind_speed_unit"].as<String>();
-    current_weather.last_updated = doc["last_updated"].as<String>();
-    current_weather.valid = true;
-
-    last_update = millis();
-
-    Serial.println("[Weather] Weather data updated successfully:");
-    Serial.println("  State: " + current_weather.state);
-    Serial.println("  Temperature: " + String(current_weather.temperature) + current_weather.temperature_unit);
-    Serial.println("  Humidity: " + String(current_weather.humidity) + "%");
-    Serial.println("  Pressure: " + String(current_weather.pressure) + " " + current_weather.pressure_unit);
-    Serial.println("  Wind: " + String(current_weather.wind_speed) + " " + current_weather.wind_speed_unit);
-
-    http.end();
-    return true;
-  }
-  else
+  if (httpResponseCode != 200)
   {
     Serial.println("[Weather] HTTP request failed with code: " + String(httpResponseCode));
     http.end();
     return false;
   }
+
+  String payload = http.getString();
+  Serial.println("[Weather] Response received, parsing JSON...");
+
+  // Parse JSON response
+  JsonDocument doc;
+  DeserializationError error = deserializeJson(doc, payload);
+
+  if (error)
+  {
+    Serial.println("[Weather] JSON parsing failed: " + String(error.c_str()));
+    http.end();
+    return false;
+  }
+
+  // Extract current weather data
+  current_weather.state = doc["state"].as<String>();
+  current_weather.temperature = doc["attributes"]["temperature"].as<float>();
+  current_weather.temperature_unit = doc["attributes"]["temperature_unit"].as<String>();
+  current_weather.humidity = doc["attributes"]["humidity"].as<int>();
+  current_weather.cloud_coverage = doc["attributes"]["cloud_coverage"].as<float>();
+  current_weather.uv_index = doc["attributes"]["uv_index"].as<float>();
+  current_weather.pressure = doc["attributes"]["pressure"].as<float>();
+  current_weather.pressure_unit = doc["attributes"]["pressure_unit"].as<String>();
+  current_weather.wind_bearing = doc["attributes"]["wind_bearing"].as<float>();
+  current_weather.wind_speed = doc["attributes"]["wind_speed"].as<float>();
+  current_weather.wind_speed_unit = doc["attributes"]["wind_speed_unit"].as<String>();
+  current_weather.last_updated = doc["last_updated"].as<String>();
+
+  http.end();
+  return true;
+}
+
+bool WeatherAPI::fetchForecastData()
+{
+  HTTPClient http;
+  String forecastUrl = "http://" + config.server_ip + ":" + String(config.server_port) +
+                       "/api/services/weather/get_forecasts?return_response=true";
+
+  Serial.println("[Weather] Fetching forecast data from: " + forecastUrl);
+
+  http.begin(forecastUrl);
+  http.addHeader("Authorization", "Bearer " + config.bearer_token);
+  http.addHeader("Content-Type", "application/json");
+
+  String postData = "{\"entity_id\": \"" + config.weather_entity + "\", \"type\": \"daily\"}";
+  int httpResponseCode = http.POST(postData);
+
+  if (httpResponseCode != 200)
+  {
+    Serial.println("[Weather] Forecast request failed with code: " + String(httpResponseCode));
+    http.end();
+    return false;
+  }
+
+  String forecastPayload = http.getString();
+  Serial.println("[Weather] Forecast response received, parsing JSON...");
+
+  JsonDocument forecastDoc;
+  DeserializationError forecastError = deserializeJson(forecastDoc, forecastPayload);
+
+  if (forecastError)
+  {
+    Serial.println("[Weather] Forecast JSON parsing failed: " + String(forecastError.c_str()));
+    http.end();
+    return false;
+  }
+
+  // Navigate to forecast array
+  JsonObject serviceResponse = forecastDoc["service_response"];
+  JsonVariant entityVariant = serviceResponse[config.weather_entity];
+
+  if (entityVariant.isNull())
+  {
+    Serial.println("[Weather] No forecast data found for entity");
+    http.end();
+    return false;
+  }
+
+  JsonArray forecast = entityVariant["forecast"];
+  if (forecast.size() == 0)
+  {
+    Serial.println("[Weather] Forecast array is empty");
+    http.end();
+    return false;
+  }
+
+  JsonObject today = forecast[0];
+  current_weather.temp_high = today["temperature"].as<float>();
+  current_weather.temp_low = today["templow"].as<float>();
+
+  Serial.println("  Temp High: " + String(current_weather.temp_high) + current_weather.temperature_unit);
+  Serial.println("  Temp Low: " + String(current_weather.temp_low) + current_weather.temperature_unit);
+
+  http.end();
+  return true;
+}
+
+void WeatherAPI::setFallbackForecast()
+{
+  current_weather.temp_high = current_weather.temperature;
+  current_weather.temp_low = current_weather.temperature;
+  Serial.println("[Weather] Using current temperature as forecast fallback");
 }
 
 WeatherData WeatherAPI::getCurrentWeather()

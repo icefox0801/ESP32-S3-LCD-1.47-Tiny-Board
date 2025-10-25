@@ -18,6 +18,8 @@ struct WeatherData
   String state;            // "cloudy", "sunny", "rainy", etc.
   float temperature;       // Current temperature
   String temperature_unit; // "°C"
+  float temp_low;          // Low temperature (from forecast)
+  float temp_high;         // High temperature (from forecast)
   int humidity;            // Humidity percentage
   float cloud_coverage;    // Cloud coverage percentage
   float uv_index;          // UV index
@@ -47,6 +49,11 @@ private:
   WeatherData current_weather;
   unsigned long last_update = 0;
   const unsigned long update_interval = 60000; // Update every 60 seconds
+
+  // Helper methods for breaking down fetchWeatherData
+  bool fetchCurrentWeather();
+  bool fetchForecastData();
+  void setFallbackForecast();
 
 public:
   WeatherAPI();
