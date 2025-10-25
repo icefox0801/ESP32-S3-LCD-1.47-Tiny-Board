@@ -13,18 +13,31 @@ class WeatherUI
 private:
   lv_obj_t *weather_screen;
   lv_obj_t *weather_container;
+  lv_obj_t *main_card;
+  lv_obj_t *info_card;
+  lv_obj_t *title_label;
   lv_obj_t *weather_icon_label;
   lv_obj_t *temperature_label;
-  lv_obj_t *humidity_label;
-  lv_obj_t *pressure_label;
-  lv_obj_t *wind_label;
-  lv_obj_t *status_label;
-  lv_obj_t *last_update_label;
+  lv_obj_t *humidity_icon_img;
+  lv_obj_t *humidity_info_label;
+  lv_obj_t *humidity_unit_label;
+  lv_obj_t *wind_icon_img;
+  lv_obj_t *wind_info_label;
+  lv_obj_t *wind_unit_label;
+  lv_obj_t *outdoor_label;
+  lv_obj_t *temp_low_label;
+  lv_obj_t *temp_high_label;
 
   WeatherAPI *weather_api;
 
   // Update task
   lv_timer_t *update_timer;
+
+  // Private helper methods for UI creation
+  void createScreenBase();
+  void createTitleLabel();
+  void createUpperCard();
+  void createLowerCard();
 
   // Static callback for timer
   static void update_timer_cb(lv_timer_t *timer);
