@@ -122,7 +122,7 @@ void WeatherUI::createLowerCard()
   info_card = lv_obj_create(weather_container);
   lv_obj_set_size(info_card, LV_HOR_RES - 30, 95);
   lv_obj_align(info_card, LV_ALIGN_TOP_MID, 0, 215);
-  lv_obj_set_style_bg_color(info_card, lv_color_hex(0x1a237e), LV_PART_MAIN); // Dark indigo
+  lv_obj_set_style_bg_color(info_card, lv_color_hex(0x004d40), LV_PART_MAIN); // Dark teal-green
   lv_obj_set_style_border_width(info_card, 0, LV_PART_MAIN);
   lv_obj_set_style_radius(info_card, 15, LV_PART_MAIN);
   lv_obj_set_style_pad_all(info_card, 8, LV_PART_MAIN);
