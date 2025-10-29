@@ -1,8 +1,7 @@
 #include "weather_icons.h"
 #include <Arduino.h>
-#include <SPIFFS.h>
+#include <LittleFS.h>
 #include <lvgl.h>
-#include <SPIFFS.h>
 
 // WeatherAPI.com condition code to SVG file mapping
 // Maps weather conditions to day/night SVG icons
@@ -92,7 +91,7 @@ const char *WeatherIcons::getEmojiForCondition(int conditionCode)
   return "☀️"; // Default sunny
 }
 
-// Get SVG file path by condition code
+// Get PNG file path by condition code (changed from SVG)
 String WeatherIcons::getSVGPath(int conditionCode, bool isDaytime)
 {
   // Search for the condition code in our mapping
@@ -101,12 +100,15 @@ String WeatherIcons::getSVGPath(int conditionCode, bool isDaytime)
     if (weatherConditionMap[i].conditionCode == conditionCode)
     {
       const char *filename = isDaytime ? weatherConditionMap[i].dayIcon : weatherConditionMap[i].nightIcon;
-      return String("/icons/") + filename;
+      // Change extension from .svg to .png
+      String path = String("/icons/") + filename;
+      path.replace(".svg", ".png");
+      return path;
     }
   }
 
   // Default to sunny icon if condition not found
-  return isDaytime ? "/icons/day_1_1.svg" : "/icons/night_1_1.svg";
+  return isDaytime ? "/icons/day_1_1.png" : "/icons/night_1_1.png";
 }
 
 // Get condition description by code
@@ -124,7 +126,7 @@ const char *WeatherIcons::getConditionDisplayName(int conditionCode)
   return "Unknown";
 }
 
-// Update weather icon widget with SVG
+// Update weather icon widget with PNG (using LODEPNG decoder)
 void WeatherIcons::updateWeatherIcon(lv_obj_t *iconWidget, int conditionCode, bool isDaytime)
 {
   if (iconWidget == nullptr)
@@ -133,53 +135,66 @@ void WeatherIcons::updateWeatherIcon(lv_obj_t *iconWidget, int conditionCode, bo
     return;
   }
 
-  // Get the SVG file path for this condition
-  String svgPath = getSVGPath(conditionCode, isDaytime);
+  // Get the PNG file path for this condition
+  String pngPath = getSVGPath(conditionCode, isDaytime); // Function returns PNG path now
 
-  Serial.printf("Loading SVG icon: %s (condition: %d, daytime: %s)\n",
-                svgPath.c_str(), conditionCode, isDaytime ? "yes" : "no");
+  Serial.printf("Loading PNG icon: %s (condition: %d, daytime: %s)\n",
+                pngPath.c_str(), conditionCode, isDaytime ? "yes" : "no");
 
-  // Clear any existing children
-  lv_obj_clean(iconWidget);
+  // Look for existing image child, or create new one
+  lv_obj_t *img = nullptr;
+  uint32_t child_count = lv_obj_get_child_count(iconWidget);
 
-  // Read SVG file from SPIFFS
-  File svgFile = SPIFFS.open(svgPath.c_str(), "r");
-  if (!svgFile)
+  // Try to find existing image object
+  for (uint32_t i = 0; i < child_count; i++)
   {
-    Serial.printf("Failed to open SVG file: %s\n", svgPath.c_str());
-    // Fallback to text label
-    lv_obj_t *label = lv_label_create(iconWidget);
-    lv_label_set_text(label, getConditionDisplayName(conditionCode));
-    lv_obj_center(label);
-    return;
+    lv_obj_t *child = lv_obj_get_child(iconWidget, i);
+    if (lv_obj_check_type(child, &lv_image_class))
+    {
+      img = child;
+      break;
+    }
   }
 
-  // Read SVG content
-  String svgContent = svgFile.readString();
-  svgFile.close();
-
-  // Try to create image object for SVG
-  lv_obj_t *img = lv_img_create(iconWidget);
-  if (img != nullptr)
+  // Create new image if none exists
+  if (img == nullptr)
   {
-    // Try to set SVG content as image source
-    // Note: This might require proper SVG parsing or conversion
-    lv_img_set_src(img, svgContent.c_str());
+    img = lv_image_create(iconWidget);
+    if (img == nullptr)
+    {
+      Serial.println("Failed to create image object");
+      // Fallback to text label
+      lv_obj_clean(iconWidget);
+      lv_obj_t *label = lv_label_create(iconWidget);
+      lv_label_set_text(label, getConditionDisplayName(conditionCode));
+      lv_obj_center(label);
+      return;
+    }
 
-    // Size the image appropriately
-    lv_obj_set_size(img, 48, 48);
+    // Initial setup for new image
+    lv_obj_set_size(img, 64, 64);
     lv_obj_center(img);
+    lv_obj_clear_flag(img, LV_OBJ_FLAG_HIDDEN);
+  }
 
-    Serial.println("SVG image loaded successfully");
-  }
-  else
-  {
-    Serial.println("Failed to create image object");
-    // Fallback to text label
-    lv_obj_t *label = lv_label_create(iconWidget);
-    lv_label_set_text(label, getConditionDisplayName(conditionCode));
-    lv_obj_center(label);
-  }
+  // Use static buffer to ensure path persists in memory
+  // LVGL needs the string to remain valid after the function returns
+  static char path_buffers[5][64]; // Support up to 5 concurrent images
+  static int buffer_index = 0;
+
+  // Cycle through buffers
+  buffer_index = (buffer_index + 1) % 5;
+
+  // Build path with SPIFFS prefix
+  snprintf(path_buffers[buffer_index], sizeof(path_buffers[buffer_index]),
+           "S:%s", pngPath.c_str());
+
+  Serial.printf("Setting image source: %s\n", path_buffers[buffer_index]);
+
+  // Set the image source (LVGL will decode PNG automatically via LODEPNG)
+  lv_image_set_src(img, path_buffers[buffer_index]);
+
+  Serial.println("PNG image configured");
 } // Create SVG weather icon widget
 lv_obj_t *WeatherIcons::createSVGIcon(lv_obj_t *parent, int conditionCode, bool isDaytime)
 {

@@ -3,20 +3,22 @@
 A modern weather display system using ESP32-S3-LCD-1.47-Tiny-Board with LVGL graphics and WeatherAPI.com integration.
 
 ![ESP32-S3](https://img.shields.io/badge/ESP32-S3-blue)
-![LVGL](https://img.shields.io/badge/LVGL-9.3.0-green)
+![LVGL](https://img.shields.io/badge/LVGL-9.4.0-green)
 ![WeatherAPI](https://img.shields.io/badge/WeatherAPI.com-Integrated-blue)
 ![PlatformIO](https://img.shields.io/badge/PlatformIO-Compatible-orange)
 ![Status](https://img.shields.io/badge/Build-Successful-brightgreen)
 
 ## ✨ Features
 
-- 🎨 **Modern LVGL UI**: Dark theme with emoji weather icons
-- 📶 **WiFi Connectivity**: Secure credential management system
-- � **WeatherAPI.com Integration**: Reliable weather data with optimized API calls
-- 🌤️ **Complete Weather Display**: Current temp, min/max, humidity, pressure, wind
+- 🎨 **Modern LVGL UI**: Dark theme with PNG weather icons (64 conditions, day/night variants)
+- �️ **High-Quality Icons**: 64x64 PNG icons converted from SVG using Inkscape
+- �📶 **WiFi Connectivity**: Secure credential management system
+- 🌤️ **WeatherAPI.com Integration**: Reliable weather data with optimized API calls
+- 📊 **Complete Weather Display**: Current temp, min/max, humidity, pressure, wind
 - 🔧 **Modular Architecture**: Clean, maintainable code structure
 - 💡 **PWM Backlight Control**: Adjustable display brightness
 - 🔄 **Auto-refresh**: Automatic weather updates every 10 minutes
+- 💾 **SPIFFS Filesystem**: Icons loaded dynamically from flash storage
 
 ## 🛠️ Hardware
 
@@ -61,28 +63,58 @@ Edit `src/weather/secrets.h` with your information:
 
 ### 4. Build and Upload
 ```bash
+# Build firmware
+pio run
+
+# Upload filesystem (weather icon PNGs)
+pio run --target uploadfs
+
+# Upload firmware
 pio run --target upload
 ```
+
+## 🎨 Weather Icons
+
+The project uses 64 high-quality PNG weather icons (64x64 pixels) with day/night variants:
+
+```bash
+# Convert SVG icons to PNG (requires Inkscape)
+python resources/convert_with_inkscape.py
+```
+
+Icons are stored in `data/icons/` and loaded dynamically via SPIFFS filesystem using LVGL's LODEPNG decoder.
+
+**Icon mapping**: WeatherAPI.com condition codes (1000-1282) → PNG files (`day_1_1.png`, `night_1_1.png`, etc.)
+
+See [resources/SVG_CONVERSION_GUIDE.md](resources/SVG_CONVERSION_GUIDE.md) for details.
 
 ## 📁 Project Structure
 
 ```
 src/
-├── config.h                 # Main configuration
-├── main.cpp                 # Application entry point
-├── secrets.h                # Credentials (gitignored)
-├── secrets_example.h        # Template for credentials
-├── lvgl/                    # LVGL display system
-│   ├── lvgl_setup.h/.cpp   # Display initialization
-├── ui/                      # User interface components
-│   ├── ui_main.h/.cpp      # Main UI components
-│   └── ui_weather.h/.cpp   # Weather display UI
-├── wifi/                    # WiFi management
-│   ├── wifi_setup.h/.cpp   # WiFi connection handling
-└── weather/                 # Weather integration
-    ├── weather_api.h/.cpp  # WeatherAPI.com client
-    ├── secrets.h           # API credentials (gitignored)
-    └── secrets_example.h   # Configuration template
+├── config.h                     # Main configuration
+├── main.cpp                     # Application entry point
+├── lvgl/                        # LVGL display system
+│   ├── lvgl_setup.h/.cpp       # Display initialization
+│   ├── lvgl_fs_spiffs.h/.cpp   # SPIFFS filesystem driver for LVGL
+├── ui/                          # User interface components
+│   ├── ui_weather.h/.cpp       # Weather display UI
+│   └── weather_icons.h/.cpp    # Weather icon loading & mapping
+├── wifi/                        # WiFi management
+│   ├── wifi_setup.h/.cpp       # WiFi connection handling
+│   ├── wifi_secrets.h          # WiFi credentials (gitignored)
+│   └── wifi_secrets_example.h  # WiFi template
+├── weather/                     # Weather integration
+│   ├── weather_api.h/.cpp      # WeatherAPI.com client
+│   ├── secrets.h               # API credentials (gitignored)
+│   └── secrets_example.h       # API template
+data/
+└── icons/                       # Weather icon PNG files (64 files)
+    ├── day_1_1.png ... day_4_8.png    (32 day icons)
+    └── night_1_1.png ... night_4_8.png (32 night icons)
+resources/
+└── icons/                       # Source SVG files (64 files)
+    └── convert_with_inkscape.py # SVG to PNG converter script
 ```
 
 ## ⚙️ Detailed Configuration

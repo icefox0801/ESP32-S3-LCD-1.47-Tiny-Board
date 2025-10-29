@@ -1,0 +1,151 @@
+#include "lvgl_fs_spiffs.h"
+#include <LittleFS.h>
+#include <FS.h>
+
+// File descriptor structure
+typedef struct
+{
+  File file;
+  bool is_open;
+} spiffs_file_t;
+
+// Open callback
+static void *fs_open_cb(lv_fs_drv_t *drv, const char *path, lv_fs_mode_t mode)
+{
+  (void)drv; // Unused
+
+  Serial.printf("[SPIFFS] Opening file: %s\n", path);
+
+  spiffs_file_t *file_p = (spiffs_file_t *)malloc(sizeof(spiffs_file_t));
+  if (file_p == NULL)
+  {
+    Serial.println("[FS] Failed to allocate file descriptor");
+    return NULL;
+  }
+
+  const char *mode_str = (mode == LV_FS_MODE_WR) ? "w" : "r";
+  file_p->file = LittleFS.open(path, mode_str);
+  file_p->is_open = (bool)file_p->file;
+
+  if (!file_p->is_open)
+  {
+    Serial.printf("[FS] Failed to open file: %s\n", path);
+    free(file_p);
+    return NULL;
+  }
+
+  Serial.printf("[FS] File opened successfully: %s (size: %d bytes)\n", path, file_p->file.size());
+  return file_p;
+}
+
+// Close callback
+static lv_fs_res_t fs_close_cb(lv_fs_drv_t *drv, void *file_p)
+{
+  (void)drv; // Unused
+
+  spiffs_file_t *f = (spiffs_file_t *)file_p;
+  if (f->is_open)
+  {
+    f->file.close();
+  }
+  free(f);
+  return LV_FS_RES_OK;
+}
+
+// Read callback
+static lv_fs_res_t fs_read_cb(lv_fs_drv_t *drv, void *file_p, void *buf, uint32_t btr, uint32_t *br)
+{
+  (void)drv; // Unused
+
+  spiffs_file_t *f = (spiffs_file_t *)file_p;
+  if (!f->is_open)
+  {
+    *br = 0;
+    return LV_FS_RES_FS_ERR;
+  }
+
+  *br = f->file.read((uint8_t *)buf, btr);
+  return (*br > 0) ? LV_FS_RES_OK : LV_FS_RES_FS_ERR;
+}
+
+// Seek callback
+static lv_fs_res_t fs_seek_cb(lv_fs_drv_t *drv, void *file_p, uint32_t pos, lv_fs_whence_t whence)
+{
+  (void)drv; // Unused
+
+  spiffs_file_t *f = (spiffs_file_t *)file_p;
+  if (!f->is_open)
+    return LV_FS_RES_FS_ERR;
+
+  SeekMode mode = SeekSet;
+  if (whence == LV_FS_SEEK_CUR)
+    mode = SeekCur;
+  else if (whence == LV_FS_SEEK_END)
+    mode = SeekEnd;
+
+  return f->file.seek(pos, mode) ? LV_FS_RES_OK : LV_FS_RES_FS_ERR;
+}
+
+// Tell callback
+static lv_fs_res_t fs_tell_cb(lv_fs_drv_t *drv, void *file_p, uint32_t *pos_p)
+{
+  (void)drv; // Unused
+
+  spiffs_file_t *f = (spiffs_file_t *)file_p;
+  if (!f->is_open)
+    return LV_FS_RES_FS_ERR;
+
+  *pos_p = f->file.position();
+  return LV_FS_RES_OK;
+}
+
+// Initialize LittleFS filesystem driver for LVGL
+void lvgl_fs_spiffs_init()
+{
+  // Initialize LittleFS
+  if (!LittleFS.begin(true))
+  {
+    Serial.println("LittleFS Mount Failed");
+    return;
+  }
+
+  Serial.println("LittleFS mounted successfully");
+
+  // Register LittleFS driver with LVGL
+  static lv_fs_drv_t fs_drv;
+  lv_fs_drv_init(&fs_drv);
+
+  fs_drv.letter = 'S'; // Drive letter 'S:' for filesystem
+  fs_drv.cache_size = 0;
+
+  fs_drv.open_cb = fs_open_cb;
+  fs_drv.close_cb = fs_close_cb;
+  fs_drv.read_cb = fs_read_cb;
+  fs_drv.seek_cb = fs_seek_cb;
+  fs_drv.tell_cb = fs_tell_cb;
+
+  lv_fs_drv_register(&fs_drv);
+
+  Serial.println("LVGL filesystem driver registered with letter 'S'");
+
+  // List files in /icons directory for debugging
+  Serial.println("\nListing files in /icons directory:");
+  File root = LittleFS.open("/icons");
+  if (!root || !root.isDirectory())
+  {
+    Serial.println("Failed to open /icons directory");
+  }
+  else
+  {
+    File file = root.openNextFile();
+    int count = 0;
+    while (file)
+    {
+      Serial.printf("  %s (%d bytes)\n", file.name(), file.size());
+      file = root.openNextFile();
+      count++;
+    }
+    Serial.printf("Total files found: %d\n", count);
+  }
+  Serial.println();
+}

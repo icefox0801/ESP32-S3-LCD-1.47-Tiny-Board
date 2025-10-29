@@ -19,15 +19,9 @@ void setup()
   Serial.begin(115200);
   delay(2000);
 
-  // Initialize SPIFFS for SVG file access
-  if (!SPIFFS.begin(true))
-  {
-    Serial.println("SPIFFS Mount Failed");
-    return;
-  }
-  Serial.println("SPIFFS initialized successfully");
+  Serial.println("ESP32-S3 Weather Display Starting...");
 
-  // Initialize LVGL
+  // Initialize LVGL (this will also initialize SPIFFS via lvgl_fs_spiffs_init)
   lvgl_setup();
 
   // Initialize WiFi

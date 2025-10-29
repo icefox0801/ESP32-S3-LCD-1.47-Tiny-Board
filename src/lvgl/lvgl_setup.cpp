@@ -1,5 +1,6 @@
 // Own header
 #include "lvgl_setup.h"
+#include "lvgl_fs_spiffs.h"
 
 // Global objects
 Adafruit_ST7789 tft = Adafruit_ST7789(TFT_CS, TFT_DC, TFT_RST);
@@ -52,4 +53,5 @@ void lvgl_setup()
   lvgl_setup_spi();
   lvgl_setup_display();
   lvgl_init_display();
+  lvgl_fs_spiffs_init(); // Initialize SPIFFS filesystem driver
 }

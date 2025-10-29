@@ -936,7 +936,7 @@
 #endif
 
 /** LODEPNG decoder library */
-#define LV_USE_LODEPNG 0
+#define LV_USE_LODEPNG 1
 
 /** PNG decoder(libpng) library */
 #define LV_USE_LIBPNG 0
@@ -1002,17 +1002,17 @@
 
 /** Enable Vector Graphic APIs
  *  Requires `LV_USE_MATRIX = 1`
- *  DISABLED - ThorVG not available for ESP32-S3 yet */
+ *  DISABLED - ThorVG has C++ compilation errors on ESP32-S3 */
 #define LV_USE_VECTOR_GRAPHIC  0
 
 /** Enable ThorVG (vector graphics library) from the src/libs folder.
  *  Requires LV_USE_VECTOR_GRAPHIC
- *  DISABLED - has compilation issues on ESP32 */
+ *  DISABLED - C++ compilation errors (brace-enclosed initializer in tvgLottieProperty.h:627) */
 #define LV_USE_THORVG_INTERNAL 0
 
 /** Enable ThorVG by assuming that its installed and linked to the project
  *  Requires LV_USE_VECTOR_GRAPHIC
- *  DISABLED - external library not available */
+ *  DISABLED - no external ThorVG library available for ESP32 */
 #define LV_USE_THORVG_EXTERNAL 0/** Use lvgl built-in LZ4 lib */
 #define LV_USE_LZ4_INTERNAL  0
 
@@ -1021,7 +1021,7 @@
 
 /*SVG library
  *  - Requires `LV_USE_VECTOR_GRAPHIC = 1`
- *  DISABLED - vector graphics not available */
+ *  DISABLED - ThorVG backend not compatible (see SVG_WORKAROUNDS.md) */
 #define LV_USE_SVG 0
 #define LV_USE_SVG_ANIMATION 0
 #define LV_USE_SVG_DEBUG 0
