@@ -131,15 +131,11 @@ void WeatherIcons::updateWeatherIcon(lv_obj_t *iconWidget, int conditionCode, bo
 {
   if (iconWidget == nullptr)
   {
-    Serial.println("Warning: iconWidget is null in updateWeatherIcon");
     return;
   }
 
   // Get the PNG file path for this condition
-  String pngPath = getSVGPath(conditionCode, isDaytime); // Function returns PNG path now
-
-  Serial.printf("Loading PNG icon: %s (condition: %d, daytime: %s)\n",
-                pngPath.c_str(), conditionCode, isDaytime ? "yes" : "no");
+  String pngPath = getSVGPath(conditionCode, isDaytime);
 
   // Look for existing image child, or create new one
   lv_obj_t *img = nullptr;
@@ -162,7 +158,6 @@ void WeatherIcons::updateWeatherIcon(lv_obj_t *iconWidget, int conditionCode, bo
     img = lv_image_create(iconWidget);
     if (img == nullptr)
     {
-      Serial.println("Failed to create image object");
       // Fallback to text label
       lv_obj_clean(iconWidget);
       lv_obj_t *label = lv_label_create(iconWidget);
@@ -185,16 +180,12 @@ void WeatherIcons::updateWeatherIcon(lv_obj_t *iconWidget, int conditionCode, bo
   // Cycle through buffers
   buffer_index = (buffer_index + 1) % 5;
 
-  // Build path with SPIFFS prefix
+  // Build path with filesystem prefix
   snprintf(path_buffers[buffer_index], sizeof(path_buffers[buffer_index]),
            "S:%s", pngPath.c_str());
 
-  Serial.printf("Setting image source: %s\n", path_buffers[buffer_index]);
-
   // Set the image source (LVGL will decode PNG automatically via LODEPNG)
   lv_image_set_src(img, path_buffers[buffer_index]);
-
-  Serial.println("PNG image configured");
 } // Create SVG weather icon widget
 lv_obj_t *WeatherIcons::createSVGIcon(lv_obj_t *parent, int conditionCode, bool isDaytime)
 {

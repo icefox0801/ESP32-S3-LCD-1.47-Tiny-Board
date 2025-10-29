@@ -19,9 +19,7 @@ void setup()
   Serial.begin(115200);
   delay(2000);
 
-  Serial.println("ESP32-S3 Weather Display Starting...");
-
-  // Initialize LVGL (this will also initialize SPIFFS via lvgl_fs_spiffs_init)
+  // Initialize LVGL (this will also initialize LittleFS via lvgl_fs_spiffs_init)
   lvgl_setup();
 
   // Initialize WiFi
@@ -37,18 +35,9 @@ void setup()
     weather_ui = new WeatherUI(weather_api);
     weather_ui->createWeatherScreen();
 
-    Serial.println("Fetching weather data...");
     if (weather_api->fetchWeatherData())
     {
-      Serial.println("Weather data fetched successfully");
-      Serial.println("Current temperature: " + weather_api->getTemperatureString());
-      Serial.println("Current humidity: " + weather_api->getHumidityString());
-      Serial.println("Current wind: " + weather_api->getWindString());
       weather_ui->updateWeatherDisplay();
-    }
-    else
-    {
-      Serial.println("Failed to fetch weather data");
     }
 
     weather_ui->showWeatherScreen();
