@@ -76,9 +76,11 @@ void WeatherUI::createUpperCard()
   lv_obj_clear_flag(main_card, LV_OBJ_FLAG_SCROLLABLE);
 
   // Weather icon - top of upper card (using emoji)
-  weather_icon_img = lv_label_create(main_card);
-  lv_label_set_text(weather_icon_img, "☀️"); // Default to sunny emoji
-  lv_obj_set_style_text_font(weather_icon_img, &lv_font_montserrat_24, LV_PART_MAIN);
+  // Create container for SVG weather icon
+  weather_icon_img = lv_obj_create(main_card);
+  lv_obj_set_size(weather_icon_img, 64, 64);
+  lv_obj_set_style_bg_opa(weather_icon_img, LV_OPA_TRANSP, 0);
+  lv_obj_set_style_border_opa(weather_icon_img, LV_OPA_TRANSP, 0);
   lv_obj_align(weather_icon_img, LV_ALIGN_TOP_MID, 0, 0);
 
   // Large temperature - center of upper card

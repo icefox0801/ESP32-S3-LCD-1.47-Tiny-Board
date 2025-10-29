@@ -1,5 +1,6 @@
 // System libraries
 #include <Arduino.h>
+#include <SPIFFS.h>
 
 // Project headers
 #include "config.h"
@@ -17,6 +18,14 @@ void setup()
 {
   Serial.begin(115200);
   delay(2000);
+
+  // Initialize SPIFFS for SVG file access
+  if (!SPIFFS.begin(true))
+  {
+    Serial.println("SPIFFS Mount Failed");
+    return;
+  }
+  Serial.println("SPIFFS initialized successfully");
 
   // Initialize LVGL
   lvgl_setup();
