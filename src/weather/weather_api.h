@@ -12,6 +12,30 @@
 // Project headers
 #include "secrets.h"
 
+// Forecast entry structure
+struct ForecastEntry
+{
+  String datetime;      // Forecast date/time
+  float temperature;    // Temperature
+  String state;         // Weather condition
+  String description;   // Weather description
+  int humidity;         // Humidity percentage
+  float pressure;       // Atmospheric pressure
+  float wind_speed;     // Wind speed
+  float wind_bearing;   // Wind direction
+  float cloud_coverage; // Cloud coverage percentage
+};
+
+// Daily forecast summary
+struct DailyForecast
+{
+  String date;           // Date (YYYY-MM-DD)
+  float temp_min;        // Minimum temperature
+  float temp_max;        // Maximum temperature
+  String main_condition; // Primary weather condition
+  String description;    // Weather description
+};
+
 // Weather data structure
 struct WeatherData
 {
@@ -50,11 +74,21 @@ private:
   unsigned long last_update = 0;
   const unsigned long update_interval = 600000; // Update every 10 minutes (OpenWeatherMap rate limit)
 
+  // Forecast data storage
+  static const int MAX_HOURLY_FORECASTS = 8; // 24 hours (3-hour intervals)
+  static const int MAX_DAILY_FORECASTS = 5;  // 5 days
+  ForecastEntry hourly_forecasts[MAX_HOURLY_FORECASTS];
+  DailyForecast daily_forecasts[MAX_DAILY_FORECASTS];
+  int hourly_count = 0;
+  int daily_count = 0;
+
   // Helper methods for breaking down fetchWeatherData
   bool fetchCurrentWeather();
   bool fetchForecastData();
+  bool fetchExtendedForecast();
   void setFallbackForecast();
   String mapOWMConditionToState(const String &condition, int weather_id);
+  void processDailyForecasts();
 
 public:
   WeatherAPI();
@@ -70,6 +104,16 @@ public:
 
   // Check if data needs updating
   bool needsUpdate();
+
+  // Forecast data access methods
+  int getHourlyForecastCount();
+  ForecastEntry getHourlyForecast(int index);
+  int getDailyForecastCount();
+  DailyForecast getDailyForecast(int index);
+
+  // Get today's detailed forecast
+  String getTodayForecastSummary();
+  float getTodayTempRange(bool getMax); // true for max, false for min
 
   // Get weather icon name based on state
   const char *getWeatherIcon(const String &weather_state);
