@@ -1,21 +1,22 @@
 # ESP32-S3 Weather Display
 
-A modern weather display system using ESP32-S3-LCD-1.47-Tiny-Board with LVGL graphics and Home Assistant integration.
+A modern weather display system using ESP32-S3-LCD-1.47-Tiny-Board with LVGL graphics and WeatherAPI.com integration.
 
 ![ESP32-S3](https://img.shields.io/badge/ESP32-S3-blue)
 ![LVGL](https://img.shields.io/badge/LVGL-9.3.0-green)
+![WeatherAPI](https://img.shields.io/badge/WeatherAPI.com-Integrated-blue)
 ![PlatformIO](https://img.shields.io/badge/PlatformIO-Compatible-orange)
 ![Status](https://img.shields.io/badge/Build-Successful-brightgreen)
 
 ## ✨ Features
 
-- 🎨 **Modern LVGL UI**: Dark theme with colorful weather indicators
+- 🎨 **Modern LVGL UI**: Dark theme with emoji weather icons
 - 📶 **WiFi Connectivity**: Secure credential management system
-- 🏠 **Home Assistant Integration**: Real-time weather data via REST API
-- 🌤️ **Complete Weather Display**: Temperature, humidity, pressure, wind
+- � **WeatherAPI.com Integration**: Reliable weather data with optimized API calls
+- 🌤️ **Complete Weather Display**: Current temp, min/max, humidity, pressure, wind
 - 🔧 **Modular Architecture**: Clean, maintainable code structure
 - 💡 **PWM Backlight Control**: Adjustable display brightness
-- 🔄 **Auto-refresh**: Automatic weather updates every 30-60 seconds
+- 🔄 **Auto-refresh**: Automatic weather updates every 10 minutes
 
 ## 🛠️ Hardware
 
@@ -32,31 +33,30 @@ DC: 41    │  RST: 39   │  BL: 48 (PWM)
 
 ## 🚀 Quick Start
 
-### 1. Clone and Configure WiFi
+### 1. Clone and Configure
 ```bash
 git clone <your-repo>
-cd ESP32-S3-LCD-1.47-Tiny-Board/src/
+cd ESP32-S3-LCD-1.47-Tiny-Board/src/weather/
 cp secrets_example.h secrets.h
 ```
 
-### 2. Edit WiFi Credentials
-Edit `src/secrets.h` with your information:
+### 2. Edit Configuration
+Edit `src/weather/secrets.h` with your information:
 ```cpp
-#define WIFI_SSID "Your_WiFi_Network"
-#define WIFI_PASSWORD "your_password"
-#define HA_SERVER_IP "192.168.1.100"
-#define HA_BEARER_TOKEN "your_home_assistant_token"
+#define WEATHER_API_KEY "your_weatherapi_key_here"
+#define WEATHER_LOCATION "Beijing"  // City name or coordinates
+#define WEATHER_UNITS "metric"      // metric, imperial
 ```
 
-### 3. Get Home Assistant Token
-1. Open Home Assistant web interface
-2. Go to **Profile** → **Long-lived access tokens**
-3. Create new token named "ESP32 Weather Display"
-4. Copy token to `secrets.h`
+### 3. Get WeatherAPI.com Key
+1. Sign up at [WeatherAPI.com](https://www.weatherapi.com/)
+2. Get your free API key (1M calls/month)
+3. Copy key to `secrets.h`
+4. Set your location (city name, coordinates, or postcode)
 
 **Security Note**:
 - `secrets.h` is automatically ignored by git for security
-- Never commit real credentials to version control
+- Never commit real API keys to version control
 - Always use the example file as a template
 
 ### 4. Build and Upload
@@ -80,27 +80,28 @@ src/
 ├── wifi/                    # WiFi management
 │   ├── wifi_setup.h/.cpp   # WiFi connection handling
 └── weather/                 # Weather integration
-    └── weather_api.h/.cpp  # Home Assistant API client
+    ├── weather_api.h/.cpp  # WeatherAPI.com client
+    ├── secrets.h           # API credentials (gitignored)
+    └── secrets_example.h   # Configuration template
 ```
 
 ## ⚙️ Detailed Configuration
 
-### WiFi Setup
-The WiFi configuration is managed through a secure credential system:
+### Configuration
+The system configuration is managed through secure credential files:
 
-1. **Copy the example file:**
+1. **Copy the configuration template:**
    ```bash
-   cd src/
+   cd src/weather/
    cp secrets_example.h secrets.h
    ```
 
-2. **Edit secrets.h with your actual credentials:**
-   - Replace `YOUR_WIFI_NETWORK_NAME` with your WiFi SSID
-   - Replace `YOUR_WIFI_PASSWORD` with your WiFi password
-   - Replace `192.168.1.100` with your Home Assistant server IP
-   - Replace `YOUR_HOME_ASSISTANT_BEARER_TOKEN_HERE` with your actual HA token
+2. **Edit secrets.h with your credentials:**
+   - Add your WeatherAPI.com API key
+   - Set your location (city name, coordinates, or postcode)
+   - Choose units (metric for °C, imperial for °F)
 
-3. **Files in main src/ directory:**
+3. **Configuration files:**
    - `secrets_example.h` - Template with placeholder values (tracked by git)
    - `secrets.h` - Actual credentials (ignored by git)
 
@@ -134,23 +135,32 @@ The LVGL system provides professional graphics rendering:
 
 ## 🌡️ Weather Data
 
-The system displays weather information from Home Assistant's `weather.forecast_home` entity:
+The system displays weather information from **WeatherAPI.com** with optimized API calls:
 
-| Data | Description |
-|------|-------------|
-| **State** | Current weather condition (sunny, cloudy, rainy, etc.) |
-| **Temperature** | Current temperature in °C |
-| **Humidity** | Relative humidity percentage |
-| **Pressure** | Atmospheric pressure in hPa |
-| **Wind** | Wind speed and direction |
+| Data | Description | Source |
+|------|-------------|---------|
+| **Temperature** | Current temperature in °C | Current weather |
+| **Min/Max** | Today's temperature range | Forecast data |
+| **Condition** | Weather condition with emoji icons | Current weather |
+| **Humidity** | Relative humidity percentage | Current weather |
+| **Pressure** | Atmospheric pressure in hPa | Current weather |
+| **Wind** | Wind speed (m/s) and direction | Current weather |
+
+### Weather API Configuration
+Edit `src/weather/secrets.h` with your WeatherAPI.com credentials:
+```cpp
+#define WEATHER_API_KEY "your_weatherapi_key_here"
+#define WEATHER_LOCATION "Beijing"  // City name or coordinates
+#define WEATHER_UNITS "metric"      // metric, imperial
+```
 
 ## 🔒 Security Features
 
-- ✅ WiFi credentials stored in gitignored file
+- ✅ API credentials stored in gitignored file
 - ✅ Example template provided for easy setup
 - ✅ No hardcoded secrets in version control
-- ✅ Secure Bearer token authentication with Home Assistant
-- ✅ Automatic credential validation
+- ✅ Secure HTTPS API communication with WeatherAPI.com
+- ✅ Automatic API key validation
 
 ## 🎨 Display Features
 
@@ -184,7 +194,7 @@ The system displays weather information from Home Assistant's `weather.forecast_
 ### Architecture
 - Modular design for easy maintenance
 - Comprehensive error handling and logging
-- Auto-reconnection for WiFi and Home Assistant
+- Auto-reconnection for WiFi and WeatherAPI.com
 - Optimized for ESP32-S3 with SPIRAM
 
 ## 🚧 Future Enhancements
@@ -259,18 +269,16 @@ This project is open source. Feel free to use and modify for your own projects.
 ## 🆘 Troubleshooting
 
 ### WiFi Connection Issues
-- Verify SSID and password in `secrets.h`
-- Check if WiFi network is 2.4GHz (ESP32 limitation)
+- Verify WiFi network is 2.4GHz (ESP32 limitation)
 - Monitor serial output for connection status
-- Ensure `secrets.h` exists (copy from `secrets_example.h`)
-- Check that Home Assistant server is reachable on the network
+- Check network connectivity and internet access
 
-### Home Assistant API Issues
-- Verify Bearer token is correct and not expired
-- Check Home Assistant server IP address
-- Ensure `weather.forecast_home` entity exists
-- Test API endpoint manually: `http://[HA_IP]:8123/api/states/weather.forecast_home`
-- Check Home Assistant logs for authentication errors
+### WeatherAPI.com Issues
+- Verify API key is correct and active in `src/weather/secrets.h`
+- Check location string format (city name, coordinates, or postcode)
+- Ensure internet connectivity for API access
+- Test API endpoint manually: `http://api.weatherapi.com/v1/current.json?key=YOUR_KEY&q=Beijing`
+- Monitor serial output for HTTP response codes and error messages
 
 ### Display Issues
 - **No display output**: Check pin connections match definitions in `lvgl_setup.h`

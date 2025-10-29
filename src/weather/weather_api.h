@@ -19,6 +19,7 @@ struct ForecastEntry
   float temperature;    // Temperature
   String state;         // Weather condition
   String description;   // Weather description
+  int condition_code;   // WeatherAPI.com condition code
   int humidity;         // Humidity percentage
   float pressure;       // Atmospheric pressure
   float wind_speed;     // Wind speed
@@ -40,6 +41,7 @@ struct DailyForecast
 struct WeatherData
 {
   String state;            // "cloudy", "sunny", "rainy", etc.
+  int condition_code;      // WeatherAPI.com condition code
   float temperature;       // Current temperature
   String temperature_unit; // "°C"
   float temp_low;          // Low temperature (from forecast)
@@ -56,38 +58,42 @@ struct WeatherData
   bool valid;              // Data validity flag
 };
 
-// OpenWeatherMap API configuration
-struct OWMConfig
+// WeatherAPI.com configuration
+struct WeatherAPIConfig
 {
-  String api_key = OWM_API_KEY;
-  String city = OWM_CITY;
-  String country_code = OWM_COUNTRY_CODE;
-  String units = OWM_UNITS;
+  String api_key = WEATHER_API_KEY;
+  String location = WEATHER_LOCATION;
+  String units = WEATHER_UNITS;
 };
 
 // Weather API class
 class WeatherAPI
 {
 private:
-  OWMConfig config;
+  WeatherAPIConfig weatherapi_config;
   WeatherData current_weather;
   unsigned long last_update = 0;
-  const unsigned long update_interval = 600000; // Update every 10 minutes (OpenWeatherMap rate limit)
+  const unsigned long update_interval = 600000; // Update every 10 minutes
 
   // Forecast data storage
-  static const int MAX_HOURLY_FORECASTS = 8; // 24 hours (3-hour intervals)
-  static const int MAX_DAILY_FORECASTS = 5;  // 5 days
+  static const int MAX_HOURLY_FORECASTS = 3; // Next 9 hours (3-hour intervals)
+  static const int MAX_DAILY_FORECASTS = 3;  // Next 3 days
   ForecastEntry hourly_forecasts[MAX_HOURLY_FORECASTS];
   DailyForecast daily_forecasts[MAX_DAILY_FORECASTS];
   int hourly_count = 0;
   int daily_count = 0;
 
-  // Helper methods for breaking down fetchWeatherData
+  // Helper methods for WeatherAPI.com
   bool fetchCurrentWeather();
   bool fetchForecastData();
   bool fetchExtendedForecast();
   void setFallbackForecast();
-  String mapOWMConditionToState(const String &condition, int weather_id);
+
+  // WeatherAPI.com specific methods - clean and simple
+  bool fetchCurrentAndTodayWeatherAPI(); // Optimized single call for current + today's min/max
+  bool fetchCurrentWeatherAPI();
+  bool fetchForecastDataAPI();
+
   void processDailyForecasts();
 
 public:
@@ -96,7 +102,7 @@ public:
   // Initialize weather API
   bool init();
 
-  // Fetch weather data from OpenWeatherMap
+  // Fetch weather data from WeatherAPI.com
   bool fetchWeatherData();
 
   // Get current weather data

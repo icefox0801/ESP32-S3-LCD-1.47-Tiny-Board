@@ -1,24 +1,6 @@
 // Own header
 #include "ui_weather.h"
 
-// Weather icon headers
-#include "icons/sunny_icon_64.h"
-#include "icons/clear_night_icon_64.h"
-#include "icons/partly_cloudy_icon_64.h"
-#include "icons/cloudy_icon_64.h"
-#include "icons/overcast_icon_64.h"
-#include "icons/fog_icon_64.h"
-#include "icons/haze_icon_64.h"
-#include "icons/windy_icon_64.h"
-#include "icons/rainy_icon_64.h"
-#include "icons/pouring_icon_64.h"
-#include "icons/snowy_icon_64.h"
-#include "icons/snowy_rainy_icon_64.h"
-#include "icons/lightning_icon_64.h"
-#include "icons/lightning_rainy_icon_64.h"
-#include "icons/hail_icon_64.h"
-#include "icons/exceptional_icon_64.h"
-
 WeatherUI::WeatherUI(WeatherAPI *api) : weather_api(api)
 {
   weather_screen = nullptr;
@@ -93,9 +75,10 @@ void WeatherUI::createUpperCard()
   lv_obj_set_style_shadow_opa(main_card, LV_OPA_30, LV_PART_MAIN);
   lv_obj_clear_flag(main_card, LV_OBJ_FLAG_SCROLLABLE);
 
-  // Weather icon - top of upper card (using actual image)
-  weather_icon_img = lv_img_create(main_card);
-  lv_img_set_src(weather_icon_img, &sunny_icon_64);
+  // Weather icon - top of upper card (using emoji)
+  weather_icon_img = lv_label_create(main_card);
+  lv_label_set_text(weather_icon_img, "☀️"); // Default to sunny emoji
+  lv_obj_set_style_text_font(weather_icon_img, &lv_font_montserrat_24, LV_PART_MAIN);
   lv_obj_align(weather_icon_img, LV_ALIGN_TOP_MID, 0, 0);
 
   // Large temperature - center of upper card
@@ -164,7 +147,7 @@ void WeatherUI::createLowerCard()
 
   // Wind unit label (smaller, aligned with humidity %)
   wind_unit_label = lv_label_create(info_card);
-  lv_label_set_text(wind_unit_label, "km/h");
+  lv_label_set_text(wind_unit_label, "m/s");
   lv_obj_set_style_text_font(wind_unit_label, &lv_font_montserrat_14, LV_PART_MAIN);
   lv_obj_set_style_text_color(wind_unit_label, lv_color_hex(0xe8f5e9), LV_PART_MAIN);
   lv_obj_align_to(wind_unit_label, wind_icon_img, LV_ALIGN_BOTTOM_LEFT, 80, 4);
@@ -187,31 +170,41 @@ void WeatherUI::updateWeatherDisplay()
 
   if (weather.valid)
   {
-    // Update weather state title
-    const char *stateName = WeatherIcons::getStateDisplayName(weather.state);
+    // Update weather state title using condition code
+    const char *stateName = WeatherIcons::getConditionDisplayName(weather.condition_code);
     lv_label_set_text(title_label, stateName);
 
-    // Update weather icon based on current state
-    const lv_image_dsc_t *icon = WeatherIcons::getIconImage(weather.state);
-    lv_img_set_src(weather_icon_img, icon);
+    // Determine if it's daytime (simple approach: 6 AM to 6 PM)
+    time_t now;
+    time(&now);
+    struct tm timeinfo;
+    localtime_r(&now, &timeinfo);
+    bool isDaytime = (timeinfo.tm_hour >= 6 && timeinfo.tm_hour < 18);
 
-    // Update temperature
-    String temp_str = String((int)weather.temperature) + "°";
+    // Update weather icon based on current condition code with day/night variant
+    if (weather_icon_img)
+    {
+      // Update the SVG icon using the condition code
+      WeatherIcons::updateWeatherIcon(weather_icon_img, weather.condition_code, isDaytime);
+    }
+
+    // Update temperature (rounded)
+    String temp_str = String((int)round(weather.temperature)) + "°";
     lv_label_set_text(temperature_label, temp_str.c_str());
 
     // Update humidity (value only, unit is separate)
     String humidity_str = String(weather.humidity);
     lv_label_set_text(humidity_info_label, humidity_str.c_str());
 
-    // Update wind speed (value only, unit is separate)
-    String wind_str = String((int)weather.wind_speed);
+    // Update wind speed (value only, unit is separate) - rounded
+    String wind_str = String((int)round(weather.wind_speed));
     lv_label_set_text(wind_info_label, wind_str.c_str());
 
     // Update wind unit
     lv_label_set_text(wind_unit_label, weather.wind_speed_unit.c_str());
 
-    // Update low/high temperature range in "X - Y°" format
-    String temp_range = String((int)weather.temp_low) + " - " + String((int)weather.temp_high) + "°";
+    // Update low/high temperature range in "X - Y°" format (rounded)
+    String temp_range = String((int)round(weather.temp_low)) + " - " + String((int)round(weather.temp_high)) + "°";
     lv_label_set_text(temp_low_label, temp_range.c_str());
   }
   else

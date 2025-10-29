@@ -1,4 +1,3 @@
-// Own header
 #include "weather_api.h"
 
 WeatherAPI::WeatherAPI()
@@ -13,6 +12,11 @@ bool WeatherAPI::init()
   return true;
 }
 
+WeatherData WeatherAPI::getCurrentWeather()
+{
+  return current_weather;
+}
+
 bool WeatherAPI::fetchWeatherData()
 {
   if (WiFi.status() != WL_CONNECTED)
@@ -20,31 +24,24 @@ bool WeatherAPI::fetchWeatherData()
     return false;
   }
 
-  if (!fetchCurrentWeather())
+  // Always use WeatherAPI.com - simplified approach
+  if (!fetchCurrentAndTodayWeatherAPI())
   {
     return false;
   }
-
-  if (!fetchForecastData())
-  {
-    setFallbackForecast();
-  }
-
-  // Optionally fetch extended 5-day forecast
-  fetchExtendedForecast();
 
   current_weather.valid = true;
   last_update = millis();
   return true;
 }
 
-bool WeatherAPI::fetchCurrentWeather()
+bool WeatherAPI::fetchCurrentAndTodayWeatherAPI()
 {
   HTTPClient http;
-  String url = "http://api.openweathermap.org/data/2.5/weather?q=" +
-               config.city + "," + config.country_code +
-               "&appid=" + config.api_key +
-               "&units=" + config.units;
+  String url = "http://api.weatherapi.com/v1/forecast.json?key=" +
+               weatherapi_config.api_key +
+               "&q=" + weatherapi_config.location +
+               "&days=1&aqi=yes&alerts=no";
 
   http.begin(url);
   int httpResponseCode = http.GET();
@@ -56,207 +53,49 @@ bool WeatherAPI::fetchCurrentWeather()
   }
 
   String payload = http.getString();
+  http.end();
 
-  JsonDocument doc;
+  DynamicJsonDocument doc(4096);
   DeserializationError error = deserializeJson(doc, payload);
 
   if (error)
   {
-    http.end();
     return false;
   }
 
-  // Map OpenWeatherMap data to our structure
-  current_weather.temperature = doc["main"]["temp"].as<float>();
-  current_weather.temperature_unit = (config.units == "metric") ? "°C" : (config.units == "imperial") ? "°F"
-                                                                                                      : "K";
-  current_weather.humidity = doc["main"]["humidity"].as<int>();
-  current_weather.pressure = doc["main"]["pressure"].as<float>();
+  // Parse current weather
+  current_weather.temperature = doc["current"]["temp_c"].as<float>();
+  current_weather.temperature_unit = "°C";
+  current_weather.humidity = doc["current"]["humidity"].as<int>();
+  current_weather.pressure = doc["current"]["pressure_mb"].as<float>();
   current_weather.pressure_unit = "hPa";
-  current_weather.wind_speed = doc["wind"]["speed"].as<float>();
-  current_weather.wind_bearing = doc["wind"]["deg"].as<float>();
-  current_weather.wind_speed_unit = (config.units == "metric") ? "m/s" : (config.units == "imperial") ? "mph"
-                                                                                                      : "m/s";
-  current_weather.cloud_coverage = doc["clouds"]["all"].as<float>();
-  current_weather.uv_index = 0; // UV data requires separate API call
+  current_weather.wind_speed = doc["current"]["wind_kph"].as<float>() / 3.6; // Convert to m/s
+  current_weather.wind_bearing = doc["current"]["wind_degree"].as<float>();
+  current_weather.wind_speed_unit = "m/s";
+  current_weather.cloud_coverage = doc["current"]["cloud"].as<float>();
+  current_weather.uv_index = doc["current"]["uv"].as<float>();
 
-  // Map weather condition to our state format
-  String condition = doc["weather"][0]["main"].as<String>();
-  int weather_id = doc["weather"][0]["id"].as<int>();
-  current_weather.state = mapOWMConditionToState(condition, weather_id);
+  // Get condition code directly from WeatherAPI.com
+  current_weather.condition_code = doc["current"]["condition"]["code"].as<int>();
+
+  // Get today's min/max from forecast data
+  JsonObject today_forecast = doc["forecast"]["forecastday"][0]["day"];
+  current_weather.temp_high = today_forecast["maxtemp_c"].as<float>();
+  current_weather.temp_low = today_forecast["mintemp_c"].as<float>();
 
   current_weather.last_updated = String(millis());
 
-  http.end();
+  Serial.println("WeatherAPI.com: Current temp: " + String(current_weather.temperature) + "°C");
+  Serial.println("WeatherAPI.com: Today's range: " + String(current_weather.temp_low) + "°C to " + String(current_weather.temp_high) + "°C");
+  Serial.println("WeatherAPI.com: Condition code: " + String(current_weather.condition_code));
+
   return true;
-}
-
-bool WeatherAPI::fetchForecastData()
-{
-  HTTPClient http;
-  String url = "http://api.openweathermap.org/data/2.5/forecast?q=" +
-               config.city + "," + config.country_code +
-               "&appid=" + config.api_key +
-               "&units=" + config.units +
-               "&cnt=8"; // Get 8 forecasts (24 hours, 3-hour intervals)
-
-  http.begin(url);
-  int httpResponseCode = http.GET();
-
-  if (httpResponseCode != 200)
-  {
-    http.end();
-    return false;
-  }
-
-  String payload = http.getString();
-
-  JsonDocument doc;
-  DeserializationError error = deserializeJson(doc, payload);
-
-  if (error)
-  {
-    http.end();
-    return false;
-  }
-
-  // Extract today's min/max from forecast data and store hourly forecasts
-  float min_temp = current_weather.temperature;
-  float max_temp = current_weather.temperature;
-  hourly_count = 0;
-
-  JsonArray forecasts = doc["list"];
-  for (JsonVariant forecast : forecasts)
-  {
-    float temp = forecast["main"]["temp"].as<float>();
-    if (temp < min_temp)
-      min_temp = temp;
-    if (temp > max_temp)
-      max_temp = temp;
-
-    // Store hourly forecast data
-    if (hourly_count < MAX_HOURLY_FORECASTS)
-    {
-      hourly_forecasts[hourly_count].datetime = forecast["dt_txt"].as<String>();
-      hourly_forecasts[hourly_count].temperature = temp;
-      hourly_forecasts[hourly_count].humidity = forecast["main"]["humidity"].as<int>();
-      hourly_forecasts[hourly_count].pressure = forecast["main"]["pressure"].as<float>();
-
-      if (forecast["wind"]["speed"])
-      {
-        hourly_forecasts[hourly_count].wind_speed = forecast["wind"]["speed"].as<float>();
-        hourly_forecasts[hourly_count].wind_bearing = forecast["wind"]["deg"].as<float>();
-      }
-
-      hourly_forecasts[hourly_count].cloud_coverage = forecast["clouds"]["all"].as<float>();
-      hourly_forecasts[hourly_count].description = forecast["weather"][0]["description"].as<String>();
-
-      String condition = forecast["weather"][0]["main"].as<String>();
-      int weather_id = forecast["weather"][0]["id"].as<int>();
-      hourly_forecasts[hourly_count].state = mapOWMConditionToState(condition, weather_id);
-
-      hourly_count++;
-    }
-  }
-
-  current_weather.temp_low = min_temp;
-  current_weather.temp_high = max_temp;
-
-  http.end();
-  return true;
-}
-
-void WeatherAPI::setFallbackForecast()
-{
-  current_weather.temp_high = current_weather.temperature;
-  current_weather.temp_low = current_weather.temperature;
-}
-
-WeatherData WeatherAPI::getCurrentWeather()
-{
-  return current_weather;
-}
-
-bool WeatherAPI::needsUpdate()
-{
-  return (millis() - last_update) > update_interval;
-}
-
-const char *WeatherAPI::getWeatherIcon(const String &weather_state)
-{
-  // Map weather states to text descriptions
-  if (weather_state == "sunny" || weather_state == "clear")
-  {
-    return "SUNNY";
-  }
-  else if (weather_state == "partlycloudy")
-  {
-    return "PARTLY CLOUDY";
-  }
-  else if (weather_state == "cloudy")
-  {
-    return "CLOUDY";
-  }
-  else if (weather_state == "rainy")
-  {
-    return "RAINY";
-  }
-  else if (weather_state == "pouring")
-  {
-    return "HEAVY RAIN";
-  }
-  else if (weather_state == "snowy" || weather_state == "snowy-rainy")
-  {
-    return "SNOWY";
-  }
-  else if (weather_state == "fog" || weather_state == "hail")
-  {
-    return "FOGGY";
-  }
-  else if (weather_state == "windy")
-  {
-    return "WINDY";
-  }
-  else if (weather_state == "lightning" || weather_state == "lightning-rainy")
-  {
-    return "STORM";
-  }
-  else if (weather_state == "exceptional")
-  {
-    return "ALERT";
-  }
-  else
-  {
-    return "LOADING";
-  }
-}
-
-String WeatherAPI::getWindDirection(float bearing)
-{
-  if (bearing >= 337.5 || bearing < 22.5)
-    return "N";
-  else if (bearing >= 22.5 && bearing < 67.5)
-    return "NE";
-  else if (bearing >= 67.5 && bearing < 112.5)
-    return "E";
-  else if (bearing >= 112.5 && bearing < 157.5)
-    return "SE";
-  else if (bearing >= 157.5 && bearing < 202.5)
-    return "S";
-  else if (bearing >= 202.5 && bearing < 247.5)
-    return "SW";
-  else if (bearing >= 247.5 && bearing < 292.5)
-    return "W";
-  else if (bearing >= 292.5 && bearing < 337.5)
-    return "NW";
-  else
-    return "?";
 }
 
 String WeatherAPI::getTemperatureString()
 {
   if (!current_weather.valid)
-    return "--°C";
+    return "--°";
   return String(current_weather.temperature, 1) + current_weather.temperature_unit;
 }
 
@@ -282,72 +121,61 @@ String WeatherAPI::getWindString()
          " " + getWindDirection(current_weather.wind_bearing);
 }
 
-String WeatherAPI::mapOWMConditionToState(const String &condition, int weather_id)
+String WeatherAPI::getWindDirection(float bearing)
 {
-  // Map OpenWeatherMap weather conditions to our icon states
-  // Based on OpenWeatherMap weather condition codes:
-  // https://openweathermap.org/weather-conditions
+  if (bearing >= 337.5 || bearing < 22.5)
+    return "N";
+  else if (bearing >= 22.5 && bearing < 67.5)
+    return "NE";
+  else if (bearing >= 67.5 && bearing < 112.5)
+    return "E";
+  else if (bearing >= 112.5 && bearing < 157.5)
+    return "SE";
+  else if (bearing >= 157.5 && bearing < 202.5)
+    return "S";
+  else if (bearing >= 202.5 && bearing < 247.5)
+    return "SW";
+  else if (bearing >= 247.5 && bearing < 292.5)
+    return "W";
+  else if (bearing >= 292.5 && bearing < 337.5)
+    return "NW";
+  return "N";
+}
 
-  if (weather_id >= 200 && weather_id < 300)
-  {
-    // Thunderstorm group
-    if (weather_id >= 230 && weather_id <= 232)
-      return "lightning-rainy";
-    return "lightning";
-  }
-  else if (weather_id >= 300 && weather_id < 400)
-  {
-    // Drizzle group
-    return "rainy";
-  }
-  else if (weather_id >= 500 && weather_id < 600)
-  {
-    // Rain group
-    if (weather_id >= 520 && weather_id <= 531)
-      return "pouring"; // Heavy rain
-    return "rainy";
-  }
-  else if (weather_id >= 600 && weather_id < 700)
-  {
-    // Snow group
-    if (weather_id == 615 || weather_id == 616 || weather_id == 620)
-      return "snowy-rainy";
-    return "snowy";
-  }
-  else if (weather_id >= 700 && weather_id < 800)
-  {
-    // Atmosphere group (mist, fog, haze, etc.)
-    if (weather_id == 701 || weather_id == 741)
-      return "fog"; // Mist/Fog
-    return "haze";
-  }
-  else if (weather_id == 800)
-  {
-    // Clear sky
-    return "sunny";
-  }
-  else if (weather_id >= 801 && weather_id <= 804)
-  {
-    // Clouds group
-    if (weather_id == 801)
-      return "partly_cloudy"; // Few clouds
-    if (weather_id == 802)
-      return "partlycloudy"; // Scattered clouds
-    return "cloudy";         // Broken/overcast clouds
-  }
+// Private helper methods
+bool WeatherAPI::fetchCurrentWeather()
+{
+  return fetchCurrentWeatherAPI();
+}
 
-  // Fallback
-  return "sunny";
+bool WeatherAPI::fetchForecastData()
+{
+  return fetchForecastDataAPI();
 }
 
 bool WeatherAPI::fetchExtendedForecast()
 {
+  // Extended forecast not needed for now
+  return true;
+}
+
+void WeatherAPI::setFallbackForecast()
+{
+  if (!current_weather.valid)
+    return;
+
+  // Set fallback values using current weather
+  current_weather.temp_low = current_weather.temperature - 3;
+  current_weather.temp_high = current_weather.temperature + 3;
+}
+
+bool WeatherAPI::fetchCurrentWeatherAPI()
+{
   HTTPClient http;
-  String url = "http://api.openweathermap.org/data/2.5/forecast?q=" +
-               config.city + "," + config.country_code +
-               "&appid=" + config.api_key +
-               "&units=" + config.units +
-               "&cnt=40"; // Get 5-day forecast (40 entries, 3-hour intervals)
+  String url = "http://api.weatherapi.com/v1/current.json?key=" +
+               weatherapi_config.api_key +
+               "&q=" + weatherapi_config.location +
+               "&aqi=yes";
 
   http.begin(url);
   int httpResponseCode = http.GET();
@@ -359,86 +187,75 @@ bool WeatherAPI::fetchExtendedForecast()
   }
 
   String payload = http.getString();
+  http.end();
 
-  JsonDocument doc;
+  DynamicJsonDocument doc(2048);
   DeserializationError error = deserializeJson(doc, payload);
 
   if (error)
+  {
+    return false;
+  }
+
+  current_weather.temperature = doc["current"]["temp_c"].as<float>();
+  current_weather.temperature_unit = "°C";
+  current_weather.humidity = doc["current"]["humidity"].as<int>();
+  current_weather.pressure = doc["current"]["pressure_mb"].as<float>();
+  current_weather.pressure_unit = "hPa";
+  current_weather.wind_speed = doc["current"]["wind_kph"].as<float>() / 3.6; // Convert to m/s
+  current_weather.wind_bearing = doc["current"]["wind_degree"].as<float>();
+  current_weather.wind_speed_unit = "m/s";
+  current_weather.cloud_coverage = doc["current"]["cloud"].as<float>();
+  current_weather.uv_index = doc["current"]["uv"].as<float>();
+
+  // Set initial min/max to current temp (will be updated by forecast if available)
+  current_weather.temp_low = current_weather.temperature;
+  current_weather.temp_high = current_weather.temperature;
+
+  // Get condition code directly from WeatherAPI.com
+  current_weather.condition_code = doc["current"]["condition"]["code"].as<int>();
+
+  current_weather.last_updated = String(millis());
+  return true;
+}
+
+bool WeatherAPI::fetchForecastDataAPI()
+{
+  HTTPClient http;
+  String url = "http://api.weatherapi.com/v1/forecast.json?key=" +
+               weatherapi_config.api_key +
+               "&q=" + weatherapi_config.location +
+               "&days=1&aqi=no&alerts=no";
+
+  http.begin(url);
+  int httpResponseCode = http.GET();
+
+  if (httpResponseCode != 200)
   {
     http.end();
     return false;
   }
 
-  // Process daily forecasts
-  daily_count = 0;
-  String current_date = "";
-  float day_min = 999, day_max = -999;
-  String day_condition = "";
-  String day_description = "";
-  int condition_count = 0;
-
-  JsonArray forecasts = doc["list"];
-  for (JsonVariant forecast : forecasts)
-  {
-    String datetime = forecast["dt_txt"].as<String>();
-    String date = datetime.substring(0, 10); // Extract YYYY-MM-DD
-
-    if (current_date != date)
-    {
-      // Save previous day if we have data
-      if (current_date != "" && daily_count < MAX_DAILY_FORECASTS)
-      {
-        daily_forecasts[daily_count].date = current_date;
-        daily_forecasts[daily_count].temp_min = day_min;
-        daily_forecasts[daily_count].temp_max = day_max;
-        daily_forecasts[daily_count].main_condition = day_condition;
-        daily_forecasts[daily_count].description = day_description;
-        daily_count++;
-      }
-
-      // Start new day
-      current_date = date;
-      day_min = 999;
-      day_max = -999;
-      day_condition = "";
-      day_description = "";
-      condition_count = 0;
-    }
-
-    // Update daily stats
-    float temp = forecast["main"]["temp"].as<float>();
-    if (temp < day_min)
-      day_min = temp;
-    if (temp > day_max)
-      day_max = temp;
-
-    // Use midday condition as representative
-    if (datetime.substring(11, 13) == "12" || condition_count == 0)
-    {
-      String condition = forecast["weather"][0]["main"].as<String>();
-      int weather_id = forecast["weather"][0]["id"].as<int>();
-      day_condition = mapOWMConditionToState(condition, weather_id);
-      day_description = forecast["weather"][0]["description"].as<String>();
-    }
-    condition_count++;
-  }
-
-  // Don't forget the last day
-  if (current_date != "" && daily_count < MAX_DAILY_FORECASTS)
-  {
-    daily_forecasts[daily_count].date = current_date;
-    daily_forecasts[daily_count].temp_min = day_min;
-    daily_forecasts[daily_count].temp_max = day_max;
-    daily_forecasts[daily_count].main_condition = day_condition;
-    daily_forecasts[daily_count].description = day_description;
-    daily_count++;
-  }
-
+  String payload = http.getString();
   http.end();
+
+  DynamicJsonDocument doc(4096);
+  DeserializationError error = deserializeJson(doc, payload);
+
+  if (error)
+  {
+    return false;
+  }
+
+  // Get today's min/max from day forecast
+  JsonObject day_forecast = doc["forecast"]["forecastday"][0]["day"];
+  current_weather.temp_high = day_forecast["maxtemp_c"].as<float>();
+  current_weather.temp_low = day_forecast["mintemp_c"].as<float>();
+
   return true;
 }
 
-// Forecast accessor methods
+// Public forecast accessor methods
 int WeatherAPI::getHourlyForecastCount()
 {
   return hourly_count;
@@ -450,7 +267,7 @@ ForecastEntry WeatherAPI::getHourlyForecast(int index)
   {
     return hourly_forecasts[index];
   }
-  return ForecastEntry(); // Return empty struct if index out of bounds
+  return ForecastEntry(); // Return empty entry
 }
 
 int WeatherAPI::getDailyForecastCount()
@@ -464,24 +281,32 @@ DailyForecast WeatherAPI::getDailyForecast(int index)
   {
     return daily_forecasts[index];
   }
-  return DailyForecast(); // Return empty struct if index out of bounds
+  return DailyForecast(); // Return empty entry
 }
 
 String WeatherAPI::getTodayForecastSummary()
 {
-  if (hourly_count > 0)
-  {
-    return "Today: " + String(current_weather.temp_low, 1) + " - " +
-           String(current_weather.temp_high, 1) + current_weather.temperature_unit +
-           ", " + hourly_forecasts[0].description;
-  }
-  return "No forecast data available";
+  if (!current_weather.valid)
+    return "No data available";
+
+  return "Today: " + String(current_weather.temp_low, 0) + "°C to " + String(current_weather.temp_high, 0) + "°C";
 }
 
 float WeatherAPI::getTodayTempRange(bool getMax)
 {
-  if (getMax)
-    return current_weather.temp_high;
-  else
-    return current_weather.temp_low;
+  if (!current_weather.valid)
+    return 0.0;
+
+  return getMax ? current_weather.temp_high : current_weather.temp_low;
+}
+
+const char *WeatherAPI::getWeatherIcon(const String &weather_state)
+{
+  // Return simple fallback - not needed since we're using emojis
+  return "";
+}
+
+bool WeatherAPI::needsUpdate()
+{
+  return (millis() - last_update) > update_interval;
 }

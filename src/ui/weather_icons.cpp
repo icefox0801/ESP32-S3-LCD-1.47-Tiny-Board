@@ -1,225 +1,157 @@
 #include "weather_icons.h"
 #include <Arduino.h>
 
-// Include all weather icon headers
-#include "icons/sunny_icon_64.h"
-#include "icons/clear_night_icon_64.h"
-#include "icons/partly_cloudy_icon_64.h"
-#include "icons/cloudy_icon_64.h"
-#include "icons/rainy_icon_64.h"
-#include "icons/pouring_icon_64.h"
-#include "icons/snowy_icon_64.h"
-#include "icons/snowy_rainy_icon_64.h"
-#include "icons/fog_icon_64.h"
-#include "icons/hail_icon_64.h"
-#include "icons/windy_icon_64.h"
-#include "icons/lightning_icon_64.h"
-#include "icons/lightning_rainy_icon_64.h"
-#include "icons/exceptional_icon_64.h"
-#include "icons/overcast_icon_64.h"
-
-const char *WeatherIcons::getIconText(WeatherIcon icon)
+// WeatherAPI.com condition code to emoji mapping
+// Simple and direct weather icon system
+static const struct
 {
-  switch (icon)
+  int conditionCode;
+  const char *description;
+  const char *emoji;
+} weatherConditionMap[] = {
+    // WeatherAPI.com condition codes
+    {1000, "Sunny", "☀️"},                     // Sunny/Clear
+    {1003, "Partly cloudy", "⛅"},            // Partly cloudy
+    {1006, "Cloudy", "☁️"},                    // Cloudy
+    {1009, "Overcast", "☁️"},                  // Overcast
+    {1030, "Mist", "🌫️"},                     // Mist
+    {1063, "Patchy rain possible", "🌦️"},     // Patchy rain possible
+    {1066, "Patchy snow possible", "🌨️"},     // Patchy snow possible
+    {1069, "Patchy sleet possible", "🌨️"},    // Patchy sleet possible
+    {1072, "Patchy freezing drizzle", "🌦️"},  // Patchy freezing drizzle possible
+    {1087, "Thundery outbreaks", "⛈️"},        // Thundery outbreaks possible
+    {1114, "Blowing snow", "🌨️"},             // Blowing snow
+    {1117, "Blizzard", "❄️"},                  // Blizzard
+    {1135, "Fog", "🌫️"},                      // Fog
+    {1147, "Freezing fog", "🌫️"},             // Freezing fog
+    {1150, "Patchy light drizzle", "🌦️"},     // Patchy light drizzle
+    {1153, "Light drizzle", "🌦️"},            // Light drizzle
+    {1168, "Freezing drizzle", "🌧️"},         // Freezing drizzle
+    {1171, "Heavy freezing drizzle", "🌧️"},   // Heavy freezing drizzle
+    {1180, "Patchy light rain", "🌦️"},        // Patchy light rain
+    {1183, "Light rain", "🌧️"},               // Light rain
+    {1186, "Moderate rain at times", "🌧️"},   // Moderate rain at times
+    {1189, "Moderate rain", "🌧️"},            // Moderate rain
+    {1192, "Heavy rain at times", "🌧️"},      // Heavy rain at times
+    {1195, "Heavy rain", "🌧️"},               // Heavy rain
+    {1198, "Light freezing rain", "🌧️"},      // Light freezing rain
+    {1201, "Heavy freezing rain", "🌧️"},      // Moderate or heavy freezing rain
+    {1204, "Light sleet", "🌨️"},              // Light sleet
+    {1207, "Heavy sleet", "🌨️"},              // Moderate or heavy sleet
+    {1210, "Patchy light snow", "🌨️"},        // Patchy light snow
+    {1213, "Light snow", "🌨️"},               // Light snow
+    {1216, "Patchy moderate snow", "🌨️"},     // Patchy moderate snow
+    {1219, "Moderate snow", "🌨️"},            // Moderate snow
+    {1222, "Patchy heavy snow", "❄️"},         // Patchy heavy snow
+    {1225, "Heavy snow", "❄️"},                // Heavy snow
+    {1237, "Ice pellets", "🧊"},              // Ice pellets
+    {1240, "Light rain shower", "🌦️"},        // Light rain shower
+    {1243, "Heavy rain shower", "🌧️"},        // Moderate or heavy rain shower
+    {1246, "Torrential rain shower", "🌧️"},   // Torrential rain shower
+    {1249, "Light sleet showers", "🌨️"},      // Light sleet showers
+    {1252, "Heavy sleet showers", "🌨️"},      // Moderate or heavy sleet showers
+    {1255, "Light snow showers", "🌨️"},       // Light snow showers
+    {1258, "Heavy snow showers", "❄️"},        // Moderate or heavy snow showers
+    {1261, "Light ice pellet showers", "🧊"}, // Light showers of ice pellets
+    {1264, "Heavy ice pellet showers", "🧊"}, // Moderate or heavy ice pellet showers
+    {1273, "Light rain with thunder", "⛈️"},   // Patchy light rain with thunder
+    {1276, "Heavy rain with thunder", "⛈️"},   // Moderate or heavy rain with thunder
+    {1279, "Light snow with thunder", "⛈️"},   // Patchy light snow with thunder
+    {1282, "Heavy snow with thunder", "⛈️"}    // Moderate or heavy snow with thunder
+};
+
+static const int NUM_CONDITIONS = sizeof(weatherConditionMap) / sizeof(weatherConditionMap[0]);
+
+// Get weather emoji by condition code
+const char *WeatherIcons::getWeatherEmoji(int conditionCode)
+{
+  // Search for the condition code in our mapping
+  for (int i = 0; i < NUM_CONDITIONS; i++)
   {
-  case ICON_SUNNY:
-    return "☀️";
-  case ICON_PARTLY_CLOUDY:
-    return "⛅";
-  case ICON_CLOUDY:
-    return "☁️";
-  case ICON_RAINY:
-    return "🌧️";
-  case ICON_POURING:
-    return "⛈️";
-  case ICON_SNOWY:
-    return "❄️";
-  case ICON_FOG:
-    return "🌫️";
-  case ICON_WINDY:
-    return "💨";
-  case ICON_LIGHTNING:
-    return "⚡";
-  case ICON_CLEAR_NIGHT:
-    return "🌙";
-  default:
-    return "❓";
+    if (weatherConditionMap[i].conditionCode == conditionCode)
+    {
+      return weatherConditionMap[i].emoji;
+    }
   }
+
+  // Default to sunny emoji if condition not found
+  return "☀️";
 }
 
-WeatherIcon WeatherIcons::getIconFromState(const String &state)
+// Get condition description by code
+const char *WeatherIcons::getConditionDisplayName(int conditionCode)
 {
-  if (state == "sunny" || state == "clear")
+  // Search for the condition code in our mapping
+  for (int i = 0; i < NUM_CONDITIONS; i++)
   {
-    return ICON_SUNNY;
+    if (weatherConditionMap[i].conditionCode == conditionCode)
+    {
+      return weatherConditionMap[i].description;
+    }
   }
-  else if (state == "partlycloudy")
-  {
-    return ICON_PARTLY_CLOUDY;
-  }
-  else if (state == "cloudy")
-  {
-    return ICON_CLOUDY;
-  }
-  else if (state == "rainy")
-  {
-    return ICON_RAINY;
-  }
-  else if (state == "pouring")
-  {
-    return ICON_POURING;
-  }
-  else if (state == "snowy" || state == "snowy-rainy")
-  {
-    return ICON_SNOWY;
-  }
-  else if (state == "fog" || state == "hail")
-  {
-    return ICON_FOG;
-  }
-  else if (state == "windy")
-  {
-    return ICON_WINDY;
-  }
-  else if (state == "lightning" || state == "lightning-rainy")
-  {
-    return ICON_LIGHTNING;
-  }
-  else if (state == "clear-night")
-  {
-    return ICON_CLEAR_NIGHT;
-  }
-  else
-  {
-    return ICON_UNKNOWN;
-  }
+
+  return "Unknown";
 }
 
-const char *WeatherIcons::getStateDisplayName(const String &state)
+// Update weather icon widget with emoji symbol
+void WeatherIcons::updateWeatherIcon(lv_obj_t *iconWidget, int conditionCode, bool isDaytime)
 {
-  if (state == "sunny" || state == "clear")
+  if (iconWidget == nullptr)
   {
-    return "Sunny";
+    Serial.println("Warning: iconWidget is null in updateWeatherIcon");
+    return;
   }
-  else if (state == "partlycloudy")
-  {
+
+  // Get the emoji for this condition
+  const char *emoji = getWeatherEmoji(conditionCode);
+
+  Serial.printf("Setting weather icon to: %s (condition: %d)\n", emoji, conditionCode);
+
+  // Set the emoji as text on the label widget
+  lv_label_set_text(iconWidget, emoji);
+
+  // Center align the emoji
+  lv_obj_set_style_text_align(iconWidget, LV_TEXT_ALIGN_CENTER, 0);
+}
+
+// Legacy compatibility methods (simplified)
+String WeatherIcons::getIconPath(int conditionCode, bool isDaytime)
+{
+  // Return emoji instead of file path for compatibility
+  return String(getWeatherEmoji(conditionCode));
+}
+
+const char *WeatherIcons::getDisplayName(const String &state)
+{
+  // Legacy method - map string states to display names
+  if (state == "clear-day" || state == "clear-night" || state == "sunny")
+    return "Clear";
+  else if (state == "partly-cloudy-day" || state == "partly-cloudy-night")
     return "Partly Cloudy";
-  }
   else if (state == "cloudy")
-  {
     return "Cloudy";
-  }
-  else if (state == "rainy")
-  {
-    return "Rainy";
-  }
-  else if (state == "pouring")
-  {
-    return "Pouring";
-  }
-  else if (state == "snowy")
-  {
-    return "Snowy";
-  }
-  else if (state == "snowy-rainy")
-  {
-    return "Snowy Rainy";
-  }
-  else if (state == "fog")
-  {
-    return "Foggy";
-  }
-  else if (state == "hail")
-  {
-    return "Hail";
-  }
-  else if (state == "windy")
-  {
+  else if (state == "overcast")
+    return "Overcast";
+  else if (state == "rain" || state == "light-rain" || state == "heavy-rain")
+    return "Rain";
+  else if (state == "snow" || state == "light-snow" || state == "heavy-snow")
+    return "Snow";
+  else if (state == "sleet")
+    return "Sleet";
+  else if (state == "wind" || state == "windy")
     return "Windy";
-  }
-  else if (state == "lightning")
-  {
-    return "Lightning";
-  }
-  else if (state == "lightning-rainy")
-  {
+  else if (state == "fog" || state == "foggy")
+    return "Fog";
+  else if (state == "thunderstorm")
     return "Thunderstorm";
-  }
-  else if (state == "clear-night")
-  {
-    return "Clear Night";
-  }
-  else if (state == "exceptional")
-  {
-    return "Exceptional";
-  }
+  else if (state == "mist")
+    return "Mist";
   else
-  {
     return "Unknown";
-  }
 }
 
-const lv_image_dsc_t *WeatherIcons::getIconImage(const String &state)
+const lv_image_dsc_t *WeatherIcons::getIconImage(const String &state, bool isDaytime)
 {
-  if (state == "sunny" || state == "clear")
-  {
-    return &sunny_icon_64;
-  }
-  else if (state == "partlycloudy")
-  {
-    return &partly_cloudy_icon_64;
-  }
-  else if (state == "cloudy")
-  {
-    return &cloudy_icon_64;
-  }
-  else if (state == "rainy")
-  {
-    return &rainy_icon_64;
-  }
-  else if (state == "pouring")
-  {
-    return &pouring_icon_64;
-  }
-  else if (state == "snowy")
-  {
-    return &snowy_icon_64;
-  }
-  else if (state == "snowy-rainy")
-  {
-    return &snowy_rainy_icon_64;
-  }
-  else if (state == "fog")
-  {
-    return &fog_icon_64;
-  }
-  else if (state == "hail")
-  {
-    return &hail_icon_64;
-  }
-  else if (state == "windy")
-  {
-    return &windy_icon_64;
-  }
-  else if (state == "lightning")
-  {
-    return &lightning_icon_64;
-  }
-  else if (state == "lightning-rainy")
-  {
-    return &lightning_rainy_icon_64;
-  }
-  else if (state == "clear-night")
-  {
-    return &clear_night_icon_64;
-  }
-  else if (state == "exceptional")
-  {
-    return &exceptional_icon_64;
-  }
-  else
-  {
-    // Default to sunny if unknown
-    return &sunny_icon_64;
-  }
+  // Return null since we're using emoji text instead of images
+  return nullptr;
 }

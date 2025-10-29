@@ -11,3 +11,6 @@ __pycache__/
 # Secrets (contains sensitive credentials)
 src/weather/secrets.h
 src/wifi/wifi_secrets.h
+
+# Logs
+logs/

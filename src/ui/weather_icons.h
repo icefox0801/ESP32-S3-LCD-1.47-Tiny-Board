@@ -4,37 +4,24 @@
 #include <lvgl.h>
 #include <WString.h>
 
-// Weather icon types
-enum WeatherIcon
-{
-  ICON_SUNNY,
-  ICON_PARTLY_CLOUDY,
-  ICON_CLOUDY,
-  ICON_RAINY,
-  ICON_POURING,
-  ICON_SNOWY,
-  ICON_FOG,
-  ICON_WINDY,
-  ICON_LIGHTNING,
-  ICON_CLEAR_NIGHT,
-  ICON_UNKNOWN
-};
-
-// Weather icons utility class
+// Weather icons utility class using Unicode emojis
+// Clean WeatherAPI.com integration with emoji weather symbols
 class WeatherIcons
 {
 public:
-  // Get text representation of weather icon
-  static const char *getIconText(WeatherIcon icon);
+  // Get weather emoji for condition code
+  static const char *getWeatherEmoji(int conditionCode);
 
-  // Map weather state string to icon type
-  static WeatherIcon getIconFromState(const String &state);
+  // Get display name for weather condition code
+  static const char *getConditionDisplayName(int conditionCode);
 
-  // Get display name for weather state
-  static const char *getStateDisplayName(const String &state);
+  // Update existing weather icon widget with new condition
+  static void updateWeatherIcon(lv_obj_t *iconWidget, int conditionCode, bool isDaytime = true);
 
-  // Get LVGL image descriptor for weather state
-  static const lv_image_dsc_t *getIconImage(const String &state);
+  // Legacy compatibility methods (simplified)
+  static String getIconPath(int conditionCode, bool isDaytime = true);
+  static const char *getDisplayName(const String &state);
+  static const lv_image_dsc_t *getIconImage(const String &state, bool isDaytime = true);
 };
 
 #endif // WEATHER_ICONS_H
