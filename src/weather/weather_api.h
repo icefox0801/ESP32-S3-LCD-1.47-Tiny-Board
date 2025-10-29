@@ -27,33 +27,34 @@ struct WeatherData
   String pressure_unit;    // "hPa"
   float wind_bearing;      // Wind direction in degrees
   float wind_speed;        // Wind speed
-  String wind_speed_unit;  // "km/h"
+  String wind_speed_unit;  // "km/h" or "m/s"
   String last_updated;     // Last update timestamp
   bool valid;              // Data validity flag
 };
 
-// Home Assistant API configuration
-struct HAConfig
+// OpenWeatherMap API configuration
+struct OWMConfig
 {
-  String server_ip = HA_SERVER_IP;
-  int server_port = HA_SERVER_PORT;
-  String bearer_token = HA_BEARER_TOKEN;
-  String weather_entity = HA_WEATHER_ENTITY;
+  String api_key = OWM_API_KEY;
+  String city = OWM_CITY;
+  String country_code = OWM_COUNTRY_CODE;
+  String units = OWM_UNITS;
 };
 
 // Weather API class
 class WeatherAPI
 {
 private:
-  HAConfig config;
+  OWMConfig config;
   WeatherData current_weather;
   unsigned long last_update = 0;
-  const unsigned long update_interval = 60000; // Update every 60 seconds
+  const unsigned long update_interval = 600000; // Update every 10 minutes (OpenWeatherMap rate limit)
 
   // Helper methods for breaking down fetchWeatherData
   bool fetchCurrentWeather();
   bool fetchForecastData();
   void setFallbackForecast();
+  String mapOWMConditionToState(const String &condition, int weather_id);
 
 public:
   WeatherAPI();
@@ -61,7 +62,7 @@ public:
   // Initialize weather API
   bool init();
 
-  // Fetch weather data from Home Assistant
+  // Fetch weather data from OpenWeatherMap
   bool fetchWeatherData();
 
   // Get current weather data

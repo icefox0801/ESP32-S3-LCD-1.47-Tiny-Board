@@ -38,13 +38,12 @@ bool WeatherAPI::fetchWeatherData()
 bool WeatherAPI::fetchCurrentWeather()
 {
   HTTPClient http;
-  String url = "http://" + config.server_ip + ":" + String(config.server_port) +
-               "/api/states/" + config.weather_entity;
+  String url = "http://api.openweathermap.org/data/2.5/weather?q=" + 
+               config.city + "," + config.country_code + 
+               "&appid=" + config.api_key + 
+               "&units=" + config.units;
 
   http.begin(url);
-  http.addHeader("Authorization", "Bearer " + config.bearer_token);
-  http.addHeader("Content-Type", "application/json");
-
   int httpResponseCode = http.GET();
 
   if (httpResponseCode != 200)
@@ -64,18 +63,26 @@ bool WeatherAPI::fetchCurrentWeather()
     return false;
   }
 
-  current_weather.state = doc["state"].as<String>();
-  current_weather.temperature = doc["attributes"]["temperature"].as<float>();
-  current_weather.temperature_unit = doc["attributes"]["temperature_unit"].as<String>();
-  current_weather.humidity = doc["attributes"]["humidity"].as<int>();
-  current_weather.cloud_coverage = doc["attributes"]["cloud_coverage"].as<float>();
-  current_weather.uv_index = doc["attributes"]["uv_index"].as<float>();
-  current_weather.pressure = doc["attributes"]["pressure"].as<float>();
-  current_weather.pressure_unit = doc["attributes"]["pressure_unit"].as<String>();
-  current_weather.wind_bearing = doc["attributes"]["wind_bearing"].as<float>();
-  current_weather.wind_speed = doc["attributes"]["wind_speed"].as<float>();
-  current_weather.wind_speed_unit = doc["attributes"]["wind_speed_unit"].as<String>();
-  current_weather.last_updated = doc["last_updated"].as<String>();
+  // Map OpenWeatherMap data to our structure
+  current_weather.temperature = doc["main"]["temp"].as<float>();
+  current_weather.temperature_unit = (config.units == "metric") ? "°C" : 
+                                    (config.units == "imperial") ? "°F" : "K";
+  current_weather.humidity = doc["main"]["humidity"].as<int>();
+  current_weather.pressure = doc["main"]["pressure"].as<float>();
+  current_weather.pressure_unit = "hPa";
+  current_weather.wind_speed = doc["wind"]["speed"].as<float>();
+  current_weather.wind_bearing = doc["wind"]["deg"].as<float>();
+  current_weather.wind_speed_unit = (config.units == "metric") ? "m/s" : 
+                                   (config.units == "imperial") ? "mph" : "m/s";
+  current_weather.cloud_coverage = doc["clouds"]["all"].as<float>();
+  current_weather.uv_index = 0; // UV data requires separate API call
+  
+  // Map weather condition to our state format
+  String condition = doc["weather"][0]["main"].as<String>();
+  int weather_id = doc["weather"][0]["id"].as<int>();
+  current_weather.state = mapOWMConditionToState(condition, weather_id);
+  
+  current_weather.last_updated = String(millis());
 
   http.end();
   return true;
@@ -84,15 +91,14 @@ bool WeatherAPI::fetchCurrentWeather()
 bool WeatherAPI::fetchForecastData()
 {
   HTTPClient http;
-  String forecastUrl = "http://" + config.server_ip + ":" + String(config.server_port) +
-                       "/api/services/weather/get_forecasts?return_response=true";
+  String url = "http://api.openweathermap.org/data/2.5/forecast?q=" + 
+               config.city + "," + config.country_code + 
+               "&appid=" + config.api_key + 
+               "&units=" + config.units + 
+               "&cnt=8"; // Get 8 forecasts (24 hours, 3-hour intervals)
 
-  http.begin(forecastUrl);
-  http.addHeader("Authorization", "Bearer " + config.bearer_token);
-  http.addHeader("Content-Type", "application/json");
-
-  String postData = "{\"entity_id\": \"" + config.weather_entity + "\", \"type\": \"daily\"}";
-  int httpResponseCode = http.POST(postData);
+  http.begin(url);
+  int httpResponseCode = http.GET();
 
   if (httpResponseCode != 200)
   {
@@ -100,36 +106,31 @@ bool WeatherAPI::fetchForecastData()
     return false;
   }
 
-  String forecastPayload = http.getString();
+  String payload = http.getString();
 
-  JsonDocument forecastDoc;
-  DeserializationError forecastError = deserializeJson(forecastDoc, forecastPayload);
+  JsonDocument doc;
+  DeserializationError error = deserializeJson(doc, payload);
 
-  if (forecastError)
+  if (error)
   {
     http.end();
     return false;
   }
 
-  JsonObject serviceResponse = forecastDoc["service_response"];
-  JsonVariant entityVariant = serviceResponse[config.weather_entity];
-
-  if (entityVariant.isNull())
+  // Extract today's min/max from forecast data
+  float min_temp = current_weather.temperature;
+  float max_temp = current_weather.temperature;
+  
+  JsonArray forecasts = doc["list"];
+  for (JsonVariant forecast : forecasts)
   {
-    http.end();
-    return false;
+    float temp = forecast["main"]["temp"].as<float>();
+    if (temp < min_temp) min_temp = temp;
+    if (temp > max_temp) max_temp = temp;
   }
-
-  JsonArray forecast = entityVariant["forecast"];
-  if (forecast.size() == 0)
-  {
-    http.end();
-    return false;
-  }
-
-  JsonObject today = forecast[0];
-  current_weather.temp_high = today["temperature"].as<float>();
-  current_weather.temp_low = today["templow"].as<float>();
+  
+  current_weather.temp_low = min_temp;
+  current_weather.temp_high = max_temp;
 
   http.end();
   return true;
@@ -246,7 +247,52 @@ String WeatherAPI::getPressureString()
 String WeatherAPI::getWindString()
 {
   if (!current_weather.valid)
-    return "-- km/h";
+    return "-- m/s";
   return String(current_weather.wind_speed, 1) + " " + current_weather.wind_speed_unit +
          " " + getWindDirection(current_weather.wind_bearing);
+}
+
+String WeatherAPI::mapOWMConditionToState(const String& condition, int weather_id)
+{
+  // Map OpenWeatherMap weather conditions to our icon states
+  // Based on OpenWeatherMap weather condition codes:
+  // https://openweathermap.org/weather-conditions
+  
+  if (weather_id >= 200 && weather_id < 300) {
+    // Thunderstorm group
+    if (weather_id >= 230 && weather_id <= 232) return "lightning-rainy";
+    return "lightning";
+  }
+  else if (weather_id >= 300 && weather_id < 400) {
+    // Drizzle group
+    return "rainy";
+  }
+  else if (weather_id >= 500 && weather_id < 600) {
+    // Rain group
+    if (weather_id >= 520 && weather_id <= 531) return "pouring"; // Heavy rain
+    return "rainy";
+  }
+  else if (weather_id >= 600 && weather_id < 700) {
+    // Snow group
+    if (weather_id == 615 || weather_id == 616 || weather_id == 620) return "snowy-rainy";
+    return "snowy";
+  }
+  else if (weather_id >= 700 && weather_id < 800) {
+    // Atmosphere group (mist, fog, haze, etc.)
+    if (weather_id == 701 || weather_id == 741) return "fog"; // Mist/Fog
+    return "haze";
+  }
+  else if (weather_id == 800) {
+    // Clear sky
+    return "sunny";
+  }
+  else if (weather_id >= 801 && weather_id <= 804) {
+    // Clouds group
+    if (weather_id == 801) return "partly_cloudy"; // Few clouds
+    if (weather_id == 802) return "partlycloudy"; // Scattered clouds
+    return "cloudy"; // Broken/overcast clouds
+  }
+  
+  // Fallback
+  return "sunny";
 }

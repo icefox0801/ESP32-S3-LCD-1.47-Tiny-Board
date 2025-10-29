@@ -8,10 +8,15 @@
 #define WIFI_SSID "YOUR_WIFI_NETWORK_NAME"
 #define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
 
-// Home Assistant Configuration
-#define HA_SERVER_IP "192.168.1.100"
-#define HA_SERVER_PORT 8123
-#define HA_BEARER_TOKEN "YOUR_HOME_ASSISTANT_BEARER_TOKEN_HERE"
-#define HA_WEATHER_ENTITY "weather.forecast_home"
+#ifndef SECRETS_H
+#define SECRETS_H
+
+// OpenWeatherMap Configuration - Rename this file to secrets.h and fill in your details
+#define OWM_API_KEY "your_openweathermap_api_key_here"  // Your OpenWeatherMap API key
+#define OWM_CITY "London"  // Your city name
+#define OWM_COUNTRY_CODE "GB"  // Your country code (ISO 3166)
+#define OWM_UNITS "metric"  // Units: metric (°C), imperial (°F), standard (K)
+
+#endif // SECRETS_H
 
 #endif // SECRETS_H
