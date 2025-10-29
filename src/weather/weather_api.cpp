@@ -51,25 +51,6 @@ bool WeatherAPI::fetchCurrentWeather()
 
   if (httpResponseCode != 200)
   {
-    // Handle specific API key activation case
-    if (httpResponseCode == 401)
-    {
-      // API key not yet active - set fallback data
-      current_weather.state = "sunny";
-      current_weather.temperature = 20.0;
-      current_weather.temperature_unit = (config.units == "metric") ? "°C" : (config.units == "imperial") ? "°F"
-                                                                                                          : "K";
-      current_weather.humidity = 50;
-      current_weather.pressure = 1013.0;
-      current_weather.pressure_unit = "hPa";
-      current_weather.wind_speed = 5.0;
-      current_weather.wind_bearing = 180.0;
-      current_weather.wind_speed_unit = (config.units == "metric") ? "m/s" : (config.units == "imperial") ? "mph"
-                                                                                                          : "m/s";
-      current_weather.cloud_coverage = 20.0;
-      current_weather.uv_index = 0;
-      current_weather.last_updated = "API Key Pending";
-    }
     http.end();
     return false;
   }
