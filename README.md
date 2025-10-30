@@ -14,11 +14,12 @@ A modern weather display system using ESP32-S3-LCD-1.47-Tiny-Board with LVGL gra
 - �️ **High-Quality Icons**: 64x64 PNG icons converted from SVG using Inkscape
 - �📶 **WiFi Connectivity**: Secure credential management system
 - 🌤️ **WeatherAPI.com Integration**: Reliable weather data with optimized API calls
-- 📊 **Complete Weather Display**: Current temp, min/max, humidity, pressure, wind
-- 🔧 **Modular Architecture**: Clean, maintainable code structure
+- 📊 **Essential Weather Display**: Current temp, min/max, humidity, air quality (PM2.5)
+- 🔧 **Modular Architecture**: Clean, maintainable code with debug macro system
 - 💡 **PWM Backlight Control**: Adjustable display brightness
 - 🔄 **Auto-refresh**: Automatic weather updates every 10 minutes
 - 💾 **SPIFFS Filesystem**: Icons loaded dynamically from flash storage
+- 🐛 **Debug System**: Conditional logging with DEBUG_ENABLED flag
 
 ## 🛠️ Hardware
 
@@ -167,16 +168,15 @@ The LVGL system provides professional graphics rendering:
 
 ## 🌡️ Weather Data
 
-The system displays weather information from **WeatherAPI.com** with optimized API calls:
+The system displays essential weather information from **WeatherAPI.com** with optimized API calls:
 
 | Data | Description | Source |
 |------|-------------|---------|
 | **Temperature** | Current temperature in °C | Current weather |
 | **Min/Max** | Today's temperature range | Forecast data |
-| **Condition** | Weather condition with emoji icons | Current weather |
+| **Condition** | Weather condition with PNG icons (day/night) | Current weather |
 | **Humidity** | Relative humidity percentage | Current weather |
-| **Pressure** | Atmospheric pressure in hPa | Current weather |
-| **Wind** | Wind speed (m/s) and direction | Current weather |
+| **Air Quality** | PM2.5 AQI (US EPA Index) | Current weather |
 
 ### Weather API Configuration
 Edit `src/weather/secrets.h` with your WeatherAPI.com credentials:
@@ -219,15 +219,17 @@ Edit `src/weather/secrets.h` with your WeatherAPI.com credentials:
 - Git (for version control)
 
 ### Memory Usage
-- **Flash**: ~1.1MB (36.4% of 3MB)
-- **RAM**: ~119KB (36.5% of 327KB)
-- **Features**: Hardware CDC enabled for debugging
+- **Flash**: ~1.42MB (45.1% of 3MB)
+- **RAM**: ~186KB (56.7% of 327KB)
+- **Features**: Hardware CDC enabled for debugging, optimized code structure
 
 ### Architecture
-- Modular design for easy maintenance
-- Comprehensive error handling and logging
+- Modular design with helper methods for maintainability
+- Conditional debug logging system (debug.h)
+- Comprehensive error handling with LOG_INFO/LOG_ERROR macros
 - Auto-reconnection for WiFi and WeatherAPI.com
 - Optimized for ESP32-S3 with SPIRAM
+- Simplified codebase - removed unused features (wind, pressure, cloud coverage, UV index)
 
 ## 🚧 Future Enhancements
 
@@ -275,15 +277,15 @@ Edit `src/weather/secrets.h` with your WeatherAPI.com credentials:
 Key configuration options in `src/config.h`:
 ```cpp
 // Weather update intervals
-#define WEATHER_UPDATE_INTERVAL_MS (60000)  // 60 seconds
+#define WEATHER_CHECK_INTERVAL_MS 300000  // 5 minutes check
+#define WEATHER_UPDATE_INTERVAL_MS 600000 // 10 minutes update
 
 // Display settings
 #define BACKLIGHT_PWM_FREQ 5000
 #define BACKLIGHT_PWM_RESOLUTION 8
 
 // Debug settings
-#define DEBUG_WEATHER_API true
-#define DEBUG_LVGL_UI true
+#define DEBUG_ENABLED 0  // Set to 1 for debug output, 0 for production
 ```
 
 ## 🤝 Contributing
