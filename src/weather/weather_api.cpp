@@ -130,28 +130,3 @@ String WeatherAPI::getAirQualityString()
     return "--";
   return String(current_weather.air_quality_pm25);
 }
-
-String WeatherAPI::getAirQualityCategory()
-{
-  if (!current_weather.valid || current_weather.air_quality_us_epa == 0)
-    return "N/A";
-
-  // US EPA Air Quality Index (1-6)
-  switch (current_weather.air_quality_us_epa)
-  {
-  case 1:
-    return "Good";
-  case 2:
-    return "Moderate";
-  case 3:
-    return "Unhealthy for Sensitive";
-  case 4:
-    return "Unhealthy";
-  case 5:
-    return "Very Unhealthy";
-  case 6:
-    return "Hazardous";
-  default:
-    return "Unknown";
-  }
-}

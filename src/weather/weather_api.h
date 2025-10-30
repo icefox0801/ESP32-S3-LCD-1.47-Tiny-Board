@@ -75,9 +75,6 @@ public:
 
   // Format air quality string
   String getAirQualityString();
-
-  // Get air quality category name
-  String getAirQualityCategory();
 };
 
 #endif // WEATHER_API_H
