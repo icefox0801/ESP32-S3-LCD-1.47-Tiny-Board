@@ -1,4 +1,5 @@
 #include "weather_api.h"
+#include "../debug.h"
 
 WeatherAPI::WeatherAPI()
 {
@@ -33,7 +34,7 @@ bool WeatherAPI::fetchWeatherData()
   current_weather.valid = true;
   last_update = millis();
   time(&last_update_time); // Capture the system time when data was fetched
-  Serial.printf("Weather fetched! Captured time: %lu\n", (unsigned long)last_update_time);
+  DEBUG_LOGF("Weather fetched at: %lu\n", (unsigned long)last_update_time);
   return true;
 }
 
@@ -99,9 +100,9 @@ bool WeatherAPI::fetchCurrentAndTodayWeatherAPI()
 
   current_weather.last_updated = String(millis());
 
-  Serial.println("WeatherAPI.com: Current temp: " + String(current_weather.temperature) + "°C");
-  Serial.println("WeatherAPI.com: Today's range: " + String(current_weather.temp_low) + "°C to " + String(current_weather.temp_high) + "°C");
-  Serial.println("WeatherAPI.com: Condition code: " + String(current_weather.condition_code));
+  DEBUG_LOGF("Temp: %.1f°C, Range: %.1f-%.1f°C, Condition: %d\n",
+             current_weather.temperature, current_weather.temp_low, 
+             current_weather.temp_high, current_weather.condition_code);
 
   return true;
 }

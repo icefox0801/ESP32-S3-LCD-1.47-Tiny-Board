@@ -12,8 +12,7 @@
 #define BACKLIGHT_BRIGHTNESS 70 // 0-100%
 
 // Debug Settings
-#define DEBUG_WEATHER true
-#define DEBUG_WIFI true
-#define DEBUG_LVGL true
+// Set to 1 to enable verbose debug logging, 0 to disable
+#define DEBUG_ENABLED 0
 
 #endif // CONFIG_H

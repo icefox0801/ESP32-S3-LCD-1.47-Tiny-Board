@@ -1,5 +1,6 @@
 // Own header
 #include "ui_weather.h"
+#include "../debug.h"
 #include <time.h>
 
 WeatherUI::WeatherUI(WeatherAPI *api) : weather_api(api)
@@ -23,7 +24,6 @@ WeatherUI::WeatherUI(WeatherAPI *api) : weather_api(api)
   temp_low_label = nullptr;
   temp_high_label = nullptr;
   refresh_time_label = nullptr;
-  update_timer = nullptr;
 }
 
 void WeatherUI::createWeatherScreen()
@@ -178,11 +178,11 @@ void WeatherUI::createLowerCard()
 
 void WeatherUI::updateWeatherDisplay()
 {
-  Serial.println("=== updateWeatherDisplay() called ===");
+  DEBUG_LOG("Updating weather display...");
 
   if (!weather_api || !weather_container)
   {
-    Serial.println("ERROR: weather_api or weather_container is NULL!");
+    LOG_ERROR("weather_api or weather_container is NULL!");
     return;
   }
 
@@ -190,65 +190,21 @@ void WeatherUI::updateWeatherDisplay()
 
   if (weather.valid)
   {
-    // Update weather state title using condition code
+    // Update weather state title
     const char *stateName = WeatherIcons::getConditionDisplayName(weather.condition_code);
     lv_label_set_text(title_label, stateName);
 
-    // Determine if it's daytime (simple approach: 6 AM to 6 PM)
-    time_t now;
-    time(&now);
-    struct tm timeinfo;
-    localtime_r(&now, &timeinfo);
-    bool isDaytime = (timeinfo.tm_hour >= 6 && timeinfo.tm_hour < 18);
-
-    // Update weather icon based on current condition code with day/night variant
+    // Update weather icon with day/night variant
     if (weather_icon_img)
     {
-      // Update the SVG icon using the condition code
-      WeatherIcons::updateWeatherIcon(weather_icon_img, weather.condition_code, isDaytime);
+      WeatherIcons::updateWeatherIcon(weather_icon_img, weather.condition_code, isDaytime());
     }
 
-    // Update temperature (rounded)
-    String temp_str = String((int)round(weather.temperature)) + "°";
-    lv_label_set_text(temperature_label, temp_str.c_str());
-
-    // Update humidity (value only, unit is separate)
-    String humidity_str = String(weather.humidity);
-    lv_label_set_text(humidity_info_label, humidity_str.c_str());
-
-    // Update air quality PM2.5 value
-    String aqi_str = weather_api->getAirQualityString();
-    lv_label_set_text(aqi_info_label, aqi_str.c_str());
-
-    // Update low/high temperature range in "X - Y°" format (rounded)
-    String temp_range = String((int)round(weather.temp_low)) + " - " + String((int)round(weather.temp_high)) + "°";
-    lv_label_set_text(temp_low_label, temp_range.c_str());
-
-    // Update refresh timestamp with loop icon and spacing
-    // Use the time when weather data was actually fetched, not current time
-    time_t fetch_time = weather_api->getLastUpdateTime();
-    Serial.printf("Fetch time from API: %lu\n", (unsigned long)fetch_time);
-
-    struct tm fetch_timeinfo;
-    localtime_r(&fetch_time, &fetch_timeinfo);
-
-    static char time_buf[32]; // Make static so it persists
-    const char *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
-    snprintf(time_buf, sizeof(time_buf), LV_SYMBOL_LOOP "  %02d:%02d %s %d",
-             fetch_timeinfo.tm_hour, fetch_timeinfo.tm_min, months[fetch_timeinfo.tm_mon], fetch_timeinfo.tm_mday);
-    Serial.printf("Setting timestamp label to: %s\n", time_buf);
-    lv_label_set_text(refresh_time_label, time_buf);
-    Serial.printf("Label pointer: %p, buffer address: %p\n", (void *)refresh_time_label, (void *)time_buf);
-
-    // Verify the label was actually updated
-    const char *current_text = lv_label_get_text(refresh_time_label);
-    Serial.printf("Current label text AFTER set: '%s'\n", current_text);
-
-    // Force LVGL to refresh this label
-    lv_obj_invalidate(refresh_time_label);
-    delay(10);         // Small delay to let LVGL process
-    lv_refr_now(NULL); // Force immediate refresh
-    Serial.printf("Label set complete with forced refresh\n");
+    // Update all display sections
+    updateTemperatureDisplay(weather);
+    updateHumidityDisplay(weather);
+    updateAirQualityDisplay();
+    updateTimestampDisplay();
   }
   else
   {
@@ -259,6 +215,74 @@ void WeatherUI::updateWeatherDisplay()
     lv_label_set_text(aqi_info_label, "--");
     lv_label_set_text(refresh_time_label, LV_SYMBOL_LOOP "  --");
   }
+}
+
+// Helper method: Check if current time is daytime (6 AM - 6 PM)
+bool WeatherUI::isDaytime() const
+{
+  time_t now;
+  time(&now);
+  struct tm timeinfo;
+  localtime_r(&now, &timeinfo);
+  return (timeinfo.tm_hour >= 6 && timeinfo.tm_hour < 18);
+}
+
+// Helper method: Update temperature display
+void WeatherUI::updateTemperatureDisplay(const WeatherData &weather)
+{
+  // Update current temperature (rounded)
+  String temp_str = String((int)round(weather.temperature)) + "°";
+  lv_label_set_text(temperature_label, temp_str.c_str());
+
+  // Update low/high temperature range in "X - Y°" format (rounded)
+  String temp_range = String((int)round(weather.temp_low)) + " - " + 
+                      String((int)round(weather.temp_high)) + "°";
+  lv_label_set_text(temp_low_label, temp_range.c_str());
+}
+
+// Helper method: Update humidity display
+void WeatherUI::updateHumidityDisplay(const WeatherData &weather)
+{
+  String humidity_str = String(weather.humidity);
+  lv_label_set_text(humidity_info_label, humidity_str.c_str());
+}
+
+// Helper method: Update air quality display
+void WeatherUI::updateAirQualityDisplay()
+{
+  String aqi_str = weather_api->getAirQualityString();
+  lv_label_set_text(aqi_info_label, aqi_str.c_str());
+}
+
+// Helper method: Update timestamp display
+void WeatherUI::updateTimestampDisplay()
+{
+  time_t fetch_time = weather_api->getLastUpdateTime();
+  DEBUG_LOGF("Fetch time: %lu\n", (unsigned long)fetch_time);
+
+  static char time_buf[32];
+  formatTimestamp(time_buf, sizeof(time_buf), fetch_time);
+  
+  lv_label_set_text(refresh_time_label, time_buf);
+  
+  // Force LVGL to refresh the label
+  lv_obj_invalidate(refresh_time_label);
+  delay(10);
+  lv_refr_now(NULL);
+}
+
+// Helper method: Format timestamp as "HH:MM Mon DD"
+void WeatherUI::formatTimestamp(char *buffer, size_t buffer_size, time_t timestamp)
+{
+  struct tm timeinfo;
+  localtime_r(&timestamp, &timeinfo);
+
+  static const char *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+                                  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+  
+  snprintf(buffer, buffer_size, LV_SYMBOL_LOOP "  %02d:%02d %s %d",
+           timeinfo.tm_hour, timeinfo.tm_min, 
+           months[timeinfo.tm_mon], timeinfo.tm_mday);
 }
 
 void WeatherUI::showWeatherScreen()
@@ -279,68 +303,15 @@ lv_obj_t *WeatherUI::getWeatherScreen()
   return weather_screen;
 }
 
+// Note: Auto-update is now handled by millis()-based timer in main.cpp loop()
+// These methods are kept for API compatibility but are no-ops
+
 void WeatherUI::startAutoUpdate()
 {
-  if (!update_timer)
-  {
-    Serial.println("Creating LVGL auto-update timer...");
-    Serial.printf("  Timer callback function: %p\n", (void *)update_timer_cb);
-    Serial.printf("  User data (this): %p\n", (void *)this);
-
-    update_timer = lv_timer_create(update_timer_cb, 10000, this); // 10 seconds for testing
-
-    if (update_timer)
-    {
-      Serial.printf("Timer created successfully! Timer object: %p\n", (void *)update_timer);
-      Serial.println("  Will fire every 10s (testing mode)");
-
-      // Test callback manually to verify it works
-      Serial.println("  Testing callback manually first...");
-      update_timer_cb(update_timer);
-      Serial.println("  Manual callback test completed!");
-    }
-    else
-    {
-      Serial.println("ERROR: Failed to create timer!");
-    }
-  }
-  else
-  {
-    Serial.println("Timer already exists!");
-  }
+  // Intentionally empty - updates handled in main.cpp loop()
 }
 
 void WeatherUI::stopAutoUpdate()
 {
-  if (update_timer)
-  {
-    lv_timer_del(update_timer);
-    update_timer = nullptr;
-  }
-}
-
-void WeatherUI::update_timer_cb(lv_timer_t *timer)
-{
-  WeatherUI *ui = (WeatherUI *)lv_timer_get_user_data(timer);
-  ui->handleUpdateTimer();
-}
-
-void WeatherUI::handleUpdateTimer()
-{
-  unsigned long now = millis();
-  Serial.printf("\n[%lu ms] === Timer fired - checking if update needed ===\n", now);
-
-  if (weather_api && weather_api->needsUpdate())
-  {
-    Serial.println("Update needed! Fetching weather data...");
-    bool success = weather_api->fetchWeatherData();
-    Serial.println(success ? "Fetch successful, updating display..." : "Fetch FAILED!");
-    // Always update display after fetch attempt (success or failure)
-    updateWeatherDisplay();
-    Serial.println("Display updated!\n");
-  }
-  else
-  {
-    Serial.println("Update not needed yet (within 10min interval)\n");
-  }
+  // Intentionally empty - updates handled in main.cpp loop()
 }

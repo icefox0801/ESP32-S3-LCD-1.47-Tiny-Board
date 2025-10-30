@@ -33,17 +33,19 @@ private:
 
   WeatherAPI *weather_api;
 
-  // Update task
-  lv_timer_t *update_timer;
-
   // Private helper methods for UI creation
   void createScreenBase();
   void createTitleLabel();
   void createUpperCard();
   void createLowerCard();
 
-  // Static callback for timer
-  static void update_timer_cb(lv_timer_t *timer);
+  // Private helper methods for display updates
+  void updateTemperatureDisplay(const WeatherData &weather);
+  void updateHumidityDisplay(const WeatherData &weather);
+  void updateAirQualityDisplay();
+  void updateTimestampDisplay();
+  void formatTimestamp(char *buffer, size_t buffer_size, time_t timestamp);
+  bool isDaytime() const;
 
 public:
   WeatherUI(WeatherAPI *api);
