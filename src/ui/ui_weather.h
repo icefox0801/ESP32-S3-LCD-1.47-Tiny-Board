@@ -3,7 +3,6 @@
 
 // Third-party libraries
 #include <lvgl.h>
-#include <misc/lv_timer.h>
 
 // Project headers
 #include "../weather/weather_api.h"

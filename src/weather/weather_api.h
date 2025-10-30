@@ -75,6 +75,9 @@ private:
   WeatherAPIConfig weatherapi_config;
   WeatherData current_weather;
   unsigned long last_update = 0;
+  time_t last_update_time = 0; // System time when data was last fetched
+  const float latitude = 40.0;
+  const float longitude = 116.5;
   const unsigned long update_interval = 600000; // Update every 10 minutes
 
   // Forecast data storage
@@ -109,6 +112,9 @@ public:
 
   // Get current weather data
   WeatherData getCurrentWeather();
+
+  // Get the time when weather data was last fetched
+  time_t getLastUpdateTime();
 
   // Check if data needs updating
   bool needsUpdate();

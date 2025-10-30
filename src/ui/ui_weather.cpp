@@ -178,8 +178,13 @@ void WeatherUI::createLowerCard()
 
 void WeatherUI::updateWeatherDisplay()
 {
+  Serial.println("=== updateWeatherDisplay() called ===");
+
   if (!weather_api || !weather_container)
+  {
+    Serial.println("ERROR: weather_api or weather_container is NULL!");
     return;
+  }
 
   WeatherData weather = weather_api->getCurrentWeather();
 
@@ -220,11 +225,30 @@ void WeatherUI::updateWeatherDisplay()
     lv_label_set_text(temp_low_label, temp_range.c_str());
 
     // Update refresh timestamp with loop icon and spacing
-    char time_buf[32];
+    // Use the time when weather data was actually fetched, not current time
+    time_t fetch_time = weather_api->getLastUpdateTime();
+    Serial.printf("Fetch time from API: %lu\n", (unsigned long)fetch_time);
+
+    struct tm fetch_timeinfo;
+    localtime_r(&fetch_time, &fetch_timeinfo);
+
+    static char time_buf[32]; // Make static so it persists
     const char *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
     snprintf(time_buf, sizeof(time_buf), LV_SYMBOL_LOOP "  %02d:%02d %s %d",
-             timeinfo.tm_hour, timeinfo.tm_min, months[timeinfo.tm_mon], timeinfo.tm_mday);
+             fetch_timeinfo.tm_hour, fetch_timeinfo.tm_min, months[fetch_timeinfo.tm_mon], fetch_timeinfo.tm_mday);
+    Serial.printf("Setting timestamp label to: %s\n", time_buf);
     lv_label_set_text(refresh_time_label, time_buf);
+    Serial.printf("Label pointer: %p, buffer address: %p\n", (void *)refresh_time_label, (void *)time_buf);
+
+    // Verify the label was actually updated
+    const char *current_text = lv_label_get_text(refresh_time_label);
+    Serial.printf("Current label text AFTER set: '%s'\n", current_text);
+
+    // Force LVGL to refresh this label
+    lv_obj_invalidate(refresh_time_label);
+    delay(10);         // Small delay to let LVGL process
+    lv_refr_now(NULL); // Force immediate refresh
+    Serial.printf("Label set complete with forced refresh\n");
   }
   else
   {
@@ -259,7 +283,30 @@ void WeatherUI::startAutoUpdate()
 {
   if (!update_timer)
   {
-    update_timer = lv_timer_create(update_timer_cb, 300000, this);
+    Serial.println("Creating LVGL auto-update timer...");
+    Serial.printf("  Timer callback function: %p\n", (void *)update_timer_cb);
+    Serial.printf("  User data (this): %p\n", (void *)this);
+
+    update_timer = lv_timer_create(update_timer_cb, 10000, this); // 10 seconds for testing
+
+    if (update_timer)
+    {
+      Serial.printf("Timer created successfully! Timer object: %p\n", (void *)update_timer);
+      Serial.println("  Will fire every 10s (testing mode)");
+
+      // Test callback manually to verify it works
+      Serial.println("  Testing callback manually first...");
+      update_timer_cb(update_timer);
+      Serial.println("  Manual callback test completed!");
+    }
+    else
+    {
+      Serial.println("ERROR: Failed to create timer!");
+    }
+  }
+  else
+  {
+    Serial.println("Timer already exists!");
   }
 }
 
@@ -280,11 +327,20 @@ void WeatherUI::update_timer_cb(lv_timer_t *timer)
 
 void WeatherUI::handleUpdateTimer()
 {
+  unsigned long now = millis();
+  Serial.printf("\n[%lu ms] === Timer fired - checking if update needed ===\n", now);
+
   if (weather_api && weather_api->needsUpdate())
   {
-    if (weather_api->fetchWeatherData())
-    {
-      updateWeatherDisplay();
-    }
+    Serial.println("Update needed! Fetching weather data...");
+    bool success = weather_api->fetchWeatherData();
+    Serial.println(success ? "Fetch successful, updating display..." : "Fetch FAILED!");
+    // Always update display after fetch attempt (success or failure)
+    updateWeatherDisplay();
+    Serial.println("Display updated!\n");
+  }
+  else
+  {
+    Serial.println("Update not needed yet (within 10min interval)\n");
   }
 }

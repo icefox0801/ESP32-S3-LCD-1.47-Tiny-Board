@@ -32,6 +32,8 @@ bool WeatherAPI::fetchWeatherData()
 
   current_weather.valid = true;
   last_update = millis();
+  time(&last_update_time); // Capture the system time when data was fetched
+  Serial.printf("Weather fetched! Captured time: %lu\n", (unsigned long)last_update_time);
   return true;
 }
 
@@ -55,7 +57,7 @@ bool WeatherAPI::fetchCurrentAndTodayWeatherAPI()
   String payload = http.getString();
   http.end();
 
-  DynamicJsonDocument doc(4096);
+  JsonDocument doc;
   DeserializationError error = deserializeJson(doc, payload);
 
   if (error)
@@ -201,7 +203,7 @@ bool WeatherAPI::fetchCurrentWeatherAPI()
   String payload = http.getString();
   http.end();
 
-  DynamicJsonDocument doc(2048);
+  JsonDocument doc;
   DeserializationError error = deserializeJson(doc, payload);
 
   if (error)
@@ -251,7 +253,7 @@ bool WeatherAPI::fetchForecastDataAPI()
   String payload = http.getString();
   http.end();
 
-  DynamicJsonDocument doc(4096);
+  JsonDocument doc;
   DeserializationError error = deserializeJson(doc, payload);
 
   if (error)
@@ -321,6 +323,11 @@ const char *WeatherAPI::getWeatherIcon(const String &weather_state)
 bool WeatherAPI::needsUpdate()
 {
   return (millis() - last_update) > update_interval;
+}
+
+time_t WeatherAPI::getLastUpdateTime()
+{
+  return last_update_time;
 }
 
 String WeatherAPI::getAirQualityString()

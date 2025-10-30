@@ -28,8 +28,27 @@ bool WiFiSetup::connect()
   if (WiFi.status() == WL_CONNECTED)
   {
     configTime(8 * 3600, 0, "pool.ntp.org", "time.nist.gov");
-    // Wait a bit for time to sync
-    delay(1000);
+
+    // Wait for NTP time sync (up to 5 seconds)
+    Serial.print("Waiting for NTP time sync...");
+    int retry = 0;
+    time_t now = 0;
+    while (retry < 10)
+    {
+      time(&now);
+      if (now > 1000000000)
+      { // Valid timestamp (after year 2001)
+        Serial.printf(" synced! Time: %lu\n", (unsigned long)now);
+        break;
+      }
+      Serial.print(".");
+      delay(500);
+      retry++;
+    }
+    if (now < 1000000000)
+    {
+      Serial.println(" timeout! Time may be incorrect.");
+    }
   }
 
   return WiFi.status() == WL_CONNECTED;

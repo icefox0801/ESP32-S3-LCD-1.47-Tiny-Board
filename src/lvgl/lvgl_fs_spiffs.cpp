@@ -20,17 +20,23 @@ static void *fs_open_cb(lv_fs_drv_t *drv, const char *path, lv_fs_mode_t mode)
     return NULL;
   }
 
-  const char *mode_str = (mode == LV_FS_MODE_WR) ? "w" : "r";
-  file_p->file = LittleFS.open(path, mode_str);
-  file_p->is_open = (bool)file_p->file;
+  // Initialize the File object properly before opening
+  new (&file_p->file) fs::File();
 
-  if (!file_p->is_open)
+  const char *mode_str = (mode == LV_FS_MODE_WR) ? "w" : "r";
+  fs::File opened_file = LittleFS.open(path, mode_str);
+
+  if (opened_file)
+  {
+    file_p->file = opened_file;
+    file_p->is_open = true;
+    return file_p;
+  }
+  else
   {
     free(file_p);
     return NULL;
   }
-
-  return file_p;
 }
 
 // Close callback
