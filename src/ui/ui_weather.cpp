@@ -38,7 +38,7 @@ void WeatherUI::createWeatherScreen()
   lv_label_set_text(refresh_time_label, "Refreshed: --");
   lv_obj_set_style_text_font(refresh_time_label, &lv_font_montserrat_16, LV_PART_MAIN); // Increased from 14 to 16
   lv_obj_set_style_text_color(refresh_time_label, lv_color_hex(0x888888), LV_PART_MAIN);
-  lv_obj_align(refresh_time_label, LV_ALIGN_BOTTOM_MID, 0, -2);
+  lv_obj_align(refresh_time_label, LV_ALIGN_BOTTOM_MID, 0, -6); // Lowered by 2pt more for optimal spacing
 }
 
 void WeatherUI::createScreenBase()
@@ -115,7 +115,7 @@ void WeatherUI::createLowerCard()
 {
   // === LOWER CARD: Air Quality & Humidity Info ===
   info_card = lv_obj_create(weather_container);
-  lv_obj_set_size(info_card, LV_HOR_RES - 20, 82);  // Increased from 78 to 82
+  lv_obj_set_size(info_card, LV_HOR_RES - 20, 78); // Reduced back to 78 to avoid overlap
   lv_obj_align(info_card, LV_ALIGN_TOP_MID, 0, 210);
   lv_obj_set_style_bg_color(info_card, lv_color_hex(0x004d40), LV_PART_MAIN); // Dark teal-green
   lv_obj_set_style_border_width(info_card, 0, LV_PART_MAIN);
