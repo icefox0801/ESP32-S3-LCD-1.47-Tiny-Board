@@ -26,9 +26,7 @@ private:
   lv_obj_t *aqi_icon_img;
   lv_obj_t *aqi_info_label;
   lv_obj_t *aqi_unit_label;
-  lv_obj_t *outdoor_label;
   lv_obj_t *temp_low_label;
-  lv_obj_t *temp_high_label;
   lv_obj_t *refresh_time_label;
 
   WeatherAPI *weather_api;
@@ -59,20 +57,8 @@ public:
   // Show weather screen
   void showWeatherScreen();
 
-  // Hide weather screen
-  void hideWeatherScreen();
-
   // Get weather screen object
   lv_obj_t *getWeatherScreen();
-
-  // Start automatic updates
-  void startAutoUpdate();
-
-  // Stop automatic updates
-  void stopAutoUpdate();
-
-  // Handle update timer
-  void handleUpdateTimer();
 };
 
 #endif // UI_WEATHER_H

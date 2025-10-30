@@ -20,9 +20,7 @@ WeatherUI::WeatherUI(WeatherAPI *api) : weather_api(api)
   aqi_icon_img = nullptr;
   aqi_info_label = nullptr;
   aqi_unit_label = nullptr;
-  outdoor_label = nullptr;
   temp_low_label = nullptr;
-  temp_high_label = nullptr;
   refresh_time_label = nullptr;
 }
 
@@ -106,9 +104,6 @@ void WeatherUI::createUpperCard()
   lv_obj_set_style_text_font(temp_low_label, &lv_font_montserrat_24, LV_PART_MAIN);
   lv_obj_set_style_text_color(temp_low_label, lv_color_hex(0xe3f2fd), LV_PART_MAIN);
   lv_obj_align(temp_low_label, LV_ALIGN_BOTTOM_MID, 0, -8);
-
-  // High temperature label no longer needed (using temp_low_label for combined display)
-  temp_high_label = nullptr;
 }
 
 void WeatherUI::createLowerCard()
@@ -235,7 +230,7 @@ void WeatherUI::updateTemperatureDisplay(const WeatherData &weather)
   lv_label_set_text(temperature_label, temp_str.c_str());
 
   // Update low/high temperature range in "X - Y°" format (rounded)
-  String temp_range = String((int)round(weather.temp_low)) + " - " + 
+  String temp_range = String((int)round(weather.temp_low)) + " - " +
                       String((int)round(weather.temp_high)) + "°";
   lv_label_set_text(temp_low_label, temp_range.c_str());
 }
@@ -262,9 +257,9 @@ void WeatherUI::updateTimestampDisplay()
 
   static char time_buf[32];
   formatTimestamp(time_buf, sizeof(time_buf), fetch_time);
-  
+
   lv_label_set_text(refresh_time_label, time_buf);
-  
+
   // Force LVGL to refresh the label
   lv_obj_invalidate(refresh_time_label);
   delay(10);
@@ -277,11 +272,11 @@ void WeatherUI::formatTimestamp(char *buffer, size_t buffer_size, time_t timesta
   struct tm timeinfo;
   localtime_r(&timestamp, &timeinfo);
 
-  static const char *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", 
-                                  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
-  
+  static const char *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                                 "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+
   snprintf(buffer, buffer_size, LV_SYMBOL_LOOP "  %02d:%02d %s %d",
-           timeinfo.tm_hour, timeinfo.tm_min, 
+           timeinfo.tm_hour, timeinfo.tm_min,
            months[timeinfo.tm_mon], timeinfo.tm_mday);
 }
 
@@ -293,25 +288,7 @@ void WeatherUI::showWeatherScreen()
   }
 }
 
-void WeatherUI::hideWeatherScreen()
-{
-  // Implementation for hiding if needed
-}
-
 lv_obj_t *WeatherUI::getWeatherScreen()
 {
   return weather_screen;
-}
-
-// Note: Auto-update is now handled by millis()-based timer in main.cpp loop()
-// These methods are kept for API compatibility but are no-ops
-
-void WeatherUI::startAutoUpdate()
-{
-  // Intentionally empty - updates handled in main.cpp loop()
-}
-
-void WeatherUI::stopAutoUpdate()
-{
-  // Intentionally empty - updates handled in main.cpp loop()
 }
