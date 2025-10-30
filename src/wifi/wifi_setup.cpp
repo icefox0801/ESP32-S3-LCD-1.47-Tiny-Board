@@ -24,6 +24,14 @@ bool WiFiSetup::connect()
     delay(500);
   }
 
+  // Configure Beijing timezone (CST - China Standard Time, UTC+8)
+  if (WiFi.status() == WL_CONNECTED)
+  {
+    configTime(8 * 3600, 0, "pool.ntp.org", "time.nist.gov");
+    // Wait a bit for time to sync
+    delay(1000);
+  }
+
   return WiFi.status() == WL_CONNECTED;
 }
 

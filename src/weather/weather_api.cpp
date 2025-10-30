@@ -75,6 +75,18 @@ bool WeatherAPI::fetchCurrentAndTodayWeatherAPI()
   current_weather.cloud_coverage = doc["current"]["cloud"].as<float>();
   current_weather.uv_index = doc["current"]["uv"].as<float>();
 
+  // Parse air quality data
+  if (doc["current"]["air_quality"])
+  {
+    current_weather.air_quality_pm25 = doc["current"]["air_quality"]["pm2_5"].as<int>();
+    current_weather.air_quality_us_epa = doc["current"]["air_quality"]["us-epa-index"].as<int>();
+  }
+  else
+  {
+    current_weather.air_quality_pm25 = 0;
+    current_weather.air_quality_us_epa = 0;
+  }
+
   // Get condition code directly from WeatherAPI.com
   current_weather.condition_code = doc["current"]["condition"]["code"].as<int>();
 
@@ -309,4 +321,36 @@ const char *WeatherAPI::getWeatherIcon(const String &weather_state)
 bool WeatherAPI::needsUpdate()
 {
   return (millis() - last_update) > update_interval;
+}
+
+String WeatherAPI::getAirQualityString()
+{
+  if (!current_weather.valid || current_weather.air_quality_us_epa == 0)
+    return "--";
+  return String(current_weather.air_quality_pm25);
+}
+
+String WeatherAPI::getAirQualityCategory()
+{
+  if (!current_weather.valid || current_weather.air_quality_us_epa == 0)
+    return "N/A";
+
+  // US EPA Air Quality Index (1-6)
+  switch (current_weather.air_quality_us_epa)
+  {
+  case 1:
+    return "Good";
+  case 2:
+    return "Moderate";
+  case 3:
+    return "Unhealthy for Sensitive";
+  case 4:
+    return "Unhealthy";
+  case 5:
+    return "Very Unhealthy";
+  case 6:
+    return "Hazardous";
+  default:
+    return "Unknown";
+  }
 }

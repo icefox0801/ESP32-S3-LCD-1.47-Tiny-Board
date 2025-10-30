@@ -24,12 +24,13 @@ private:
   lv_obj_t *humidity_icon_img;
   lv_obj_t *humidity_info_label;
   lv_obj_t *humidity_unit_label;
-  lv_obj_t *wind_icon_img;
-  lv_obj_t *wind_info_label;
-  lv_obj_t *wind_unit_label;
+  lv_obj_t *aqi_icon_img;
+  lv_obj_t *aqi_info_label;
+  lv_obj_t *aqi_unit_label;
   lv_obj_t *outdoor_label;
   lv_obj_t *temp_low_label;
   lv_obj_t *temp_high_label;
+  lv_obj_t *refresh_time_label;
 
   WeatherAPI *weather_api;
 

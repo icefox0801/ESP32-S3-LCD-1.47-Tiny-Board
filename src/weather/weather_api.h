@@ -54,6 +54,8 @@ struct WeatherData
   float wind_bearing;      // Wind direction in degrees
   float wind_speed;        // Wind speed
   String wind_speed_unit;  // "km/h" or "m/s"
+  int air_quality_pm25;    // Air Quality PM2.5 (μg/m³)
+  int air_quality_us_epa;  // US EPA Air Quality Index (1-6)
   String last_updated;     // Last update timestamp
   bool valid;              // Data validity flag
 };
@@ -138,6 +140,12 @@ public:
 
   // Format wind string
   String getWindString();
+
+  // Format air quality string
+  String getAirQualityString();
+
+  // Get air quality category name
+  String getAirQualityCategory();
 };
 
 #endif // WEATHER_API_H
