@@ -186,7 +186,7 @@ The project uses LVGL 9.4.0 for advanced UI rendering:
 void setup() {
   // Initialize LVGL display system
   lvgl_setup();
-  
+
   // Create weather UI
   WeatherUI weather_ui(&weather_api);
   weather_ui.createWeatherScreen();
