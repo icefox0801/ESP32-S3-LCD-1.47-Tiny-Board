@@ -34,14 +34,12 @@ void WeatherUI::createWeatherScreen()
   createUpperCard();
   createLowerCard();
 
+#if DISPLAY_HORIZONTAL
+  // In horizontal mode, refresh label is inside upper card - created there
+#else
   // Create refresh timestamp label at bottom (below lower card)
   refresh_time_label = lv_label_create(weather_container);
   lv_label_set_text(refresh_time_label, "Refreshed: --");
-#if DISPLAY_HORIZONTAL
-  lv_obj_set_style_text_font(refresh_time_label, &lv_font_montserrat_14, LV_PART_MAIN);
-  lv_obj_set_style_text_color(refresh_time_label, lv_color_hex(0x888888), LV_PART_MAIN);
-  lv_obj_align(refresh_time_label, LV_ALIGN_BOTTOM_MID, 0, -3);
-#else
   lv_obj_set_style_text_font(refresh_time_label, &lv_font_montserrat_16, LV_PART_MAIN);
   lv_obj_set_style_text_color(refresh_time_label, lv_color_hex(0x888888), LV_PART_MAIN);
   lv_obj_align(refresh_time_label, LV_ALIGN_BOTTOM_MID, 0, -5);
@@ -87,7 +85,7 @@ void WeatherUI::createUpperCard()
   main_card = lv_obj_create(weather_container);
 #if DISPLAY_HORIZONTAL
   // Horizontal: Full width upper card starting from top
-  lv_obj_set_size(main_card, LV_HOR_RES - 10, 95);
+  lv_obj_set_size(main_card, LV_HOR_RES - 10, 105);
   lv_obj_align(main_card, LV_ALIGN_TOP_MID, 0, 5);
 #else
   // Vertical: Full width upper card
@@ -110,6 +108,13 @@ void WeatherUI::createUpperCard()
   lv_obj_set_style_text_font(card_title_label, &lv_font_montserrat_16, LV_PART_MAIN);
   lv_obj_set_style_text_color(card_title_label, lv_color_hex(0xe3f2fd), LV_PART_MAIN);
   lv_obj_align(card_title_label, LV_ALIGN_TOP_LEFT, 5, 2);
+
+  // Refresh time label at top-right of upper card (horizontal only)
+  refresh_time_label = lv_label_create(main_card);
+  lv_label_set_text(refresh_time_label, LV_SYMBOL_LOOP " --");
+  lv_obj_set_style_text_font(refresh_time_label, &lv_font_montserrat_14, LV_PART_MAIN);
+  lv_obj_set_style_text_color(refresh_time_label, lv_color_hex(0x9575cd), LV_PART_MAIN); // Dimmed purple
+  lv_obj_align(refresh_time_label, LV_ALIGN_TOP_RIGHT, -5, 2);
 #endif
 
   // Weather icon - top of upper card (vertical) or left side (horizontal)
@@ -120,7 +125,7 @@ void WeatherUI::createUpperCard()
   lv_obj_set_style_border_width(weather_icon_img, 0, 0);
   lv_obj_set_style_pad_all(weather_icon_img, 0, 0);
   lv_obj_clear_flag(weather_icon_img, LV_OBJ_FLAG_SCROLLABLE);
-  lv_obj_align(weather_icon_img, LV_ALIGN_LEFT_MID, 5, 8);
+  lv_obj_align(weather_icon_img, LV_ALIGN_LEFT_MID, 5, 10);
 #else
   lv_obj_set_size(weather_icon_img, 64, 64);
   lv_obj_set_style_bg_opa(weather_icon_img, LV_OPA_TRANSP, 0);
@@ -135,7 +140,7 @@ void WeatherUI::createUpperCard()
 #if DISPLAY_HORIZONTAL
   lv_obj_set_style_text_font(temperature_label, &lv_font_montserrat_48, LV_PART_MAIN);
   lv_obj_set_style_text_color(temperature_label, lv_color_hex(0xffffff), LV_PART_MAIN);
-  lv_obj_align(temperature_label, LV_ALIGN_CENTER, 10, 5);
+  lv_obj_align(temperature_label, LV_ALIGN_CENTER, 10, 10);
 #else
   lv_obj_set_style_text_font(temperature_label, &lv_font_montserrat_48, LV_PART_MAIN);
   lv_obj_set_style_text_color(temperature_label, lv_color_hex(0xffffff), LV_PART_MAIN);
@@ -162,8 +167,8 @@ void WeatherUI::createLowerCard()
   info_card = lv_obj_create(weather_container);
 #if DISPLAY_HORIZONTAL
   // Horizontal: Full width lower card below upper card
-  lv_obj_set_size(info_card, LV_HOR_RES - 10, 38);
-  lv_obj_align(info_card, LV_ALIGN_TOP_MID, 0, 104);
+  lv_obj_set_size(info_card, LV_HOR_RES - 10, 48);
+  lv_obj_align(info_card, LV_ALIGN_TOP_MID, 0, 115);
 #else
   // Vertical: Full width lower card
   lv_obj_set_size(info_card, LV_HOR_RES - 20, 80);
@@ -173,10 +178,10 @@ void WeatherUI::createLowerCard()
   lv_obj_set_style_border_width(info_card, 0, LV_PART_MAIN);
   lv_obj_set_style_radius(info_card, 15, LV_PART_MAIN);
 #if DISPLAY_HORIZONTAL
-  lv_obj_set_style_pad_top(info_card, 6, LV_PART_MAIN);
+  lv_obj_set_style_pad_top(info_card, 10, LV_PART_MAIN);
   lv_obj_set_style_pad_left(info_card, 15, LV_PART_MAIN);
   lv_obj_set_style_pad_right(info_card, 15, LV_PART_MAIN);
-  lv_obj_set_style_pad_bottom(info_card, 6, LV_PART_MAIN);
+  lv_obj_set_style_pad_bottom(info_card, 10, LV_PART_MAIN);
 #else
   lv_obj_set_style_pad_top(info_card, 8, LV_PART_MAIN);
   lv_obj_set_style_pad_left(info_card, 15, LV_PART_MAIN);
@@ -193,7 +198,7 @@ void WeatherUI::createLowerCard()
   // PM2.5 label on the left: "PM2.5: xxx"
   aqi_icon_img = lv_label_create(info_card); // Reuse as combined label
   lv_label_set_text(aqi_icon_img, "PM2.5:");
-  lv_obj_set_style_text_font(aqi_icon_img, &lv_font_montserrat_16, LV_PART_MAIN);
+  lv_obj_set_style_text_font(aqi_icon_img, &lv_font_montserrat_14, LV_PART_MAIN);
   lv_obj_set_style_text_color(aqi_icon_img, lv_color_hex(0xe8f5e9), LV_PART_MAIN);
   lv_obj_align(aqi_icon_img, LV_ALIGN_LEFT_MID, 0, 0);
 
@@ -202,7 +207,7 @@ void WeatherUI::createLowerCard()
   lv_label_set_text(aqi_info_label, "--");
   lv_obj_set_style_text_font(aqi_info_label, &lv_font_montserrat_24, LV_PART_MAIN);
   lv_obj_set_style_text_color(aqi_info_label, lv_color_hex(0xffffff), LV_PART_MAIN);
-  lv_obj_align(aqi_info_label, LV_ALIGN_LEFT_MID, 65, 0);
+  lv_obj_align(aqi_info_label, LV_ALIGN_LEFT_MID, 58, 0);
 
   // Hide unused labels in horizontal mode
   aqi_unit_label = lv_label_create(info_card);
@@ -211,9 +216,9 @@ void WeatherUI::createLowerCard()
   // Humidity label on the right: "Humidity: xx%"
   humidity_icon_img = lv_label_create(info_card); // Reuse as combined label
   lv_label_set_text(humidity_icon_img, "Humidity:");
-  lv_obj_set_style_text_font(humidity_icon_img, &lv_font_montserrat_16, LV_PART_MAIN);
+  lv_obj_set_style_text_font(humidity_icon_img, &lv_font_montserrat_14, LV_PART_MAIN);
   lv_obj_set_style_text_color(humidity_icon_img, lv_color_hex(0xe8f5e9), LV_PART_MAIN);
-  lv_obj_align(humidity_icon_img, LV_ALIGN_CENTER, 20, 0);
+  lv_obj_align(humidity_icon_img, LV_ALIGN_RIGHT_MID, -70, 0);
 
   // Humidity value with %
   humidity_info_label = lv_label_create(info_card);
@@ -398,9 +403,16 @@ void WeatherUI::formatTimestamp(char *buffer, size_t buffer_size, time_t timesta
   static const char *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
                                  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
+#if DISPLAY_HORIZONTAL
+  // Compact format for horizontal mode (inside card): "🔄 HH:MM Mon D"
+  snprintf(buffer, buffer_size, LV_SYMBOL_LOOP " %02d:%02d %s %d",
+           timeinfo.tm_hour, timeinfo.tm_min,
+           months[timeinfo.tm_mon], timeinfo.tm_mday);
+#else
   snprintf(buffer, buffer_size, LV_SYMBOL_LOOP "  %02d:%02d %s %d",
            timeinfo.tm_hour, timeinfo.tm_min,
            months[timeinfo.tm_mon], timeinfo.tm_mday);
+#endif
 }
 
 void WeatherUI::showWeatherScreen()
