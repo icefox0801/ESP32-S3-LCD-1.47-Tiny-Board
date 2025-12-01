@@ -8,6 +8,8 @@ A modern weather display system using ESP32-S3-LCD-1.47-Tiny-Board with LVGL gra
 ![PlatformIO](https://img.shields.io/badge/PlatformIO-Compatible-orange)
 ![Status](https://img.shields.io/badge/Build-Successful-brightgreen)
 
+<img width="399" height="215" alt="IMG_8835" src="https://github.com/user-attachments/assets/3e0346ad-a657-4604-8ddd-d4393984182e" />
+
 ## ✨ Features
 
 - 🎨 **Modern LVGL UI**: Dark theme with PNG weather icons (64 conditions, day/night variants)
