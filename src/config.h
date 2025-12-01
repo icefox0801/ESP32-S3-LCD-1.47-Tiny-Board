@@ -11,6 +11,11 @@
 // Display Settings
 #define BACKLIGHT_BRIGHTNESS 70 // 0-100%
 
+// Display Orientation
+// Set to 0 for VERTICAL (portrait, 172x320) - default
+// Set to 1 for HORIZONTAL (landscape, 320x172)
+#define DISPLAY_HORIZONTAL 1
+
 // Debug Settings
 // Set to 1 to enable verbose debug logging, 0 to disable
 #define DEBUG_ENABLED 0

@@ -28,6 +28,7 @@ private:
   lv_obj_t *aqi_unit_label;
   lv_obj_t *temp_low_label;
   lv_obj_t *refresh_time_label;
+  lv_obj_t *card_title_label; // Weather status in upper card (horizontal mode)
 
   WeatherAPI *weather_api;
 

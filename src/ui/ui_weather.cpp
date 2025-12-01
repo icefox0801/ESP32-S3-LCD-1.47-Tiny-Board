@@ -1,6 +1,8 @@
 // Own header
 #include "ui_weather.h"
+#include "label_icons.h"
 #include "../debug.h"
+#include "../config.h"
 #include <time.h>
 
 WeatherUI::WeatherUI(WeatherAPI *api) : weather_api(api)
@@ -22,6 +24,7 @@ WeatherUI::WeatherUI(WeatherAPI *api) : weather_api(api)
   aqi_unit_label = nullptr;
   temp_low_label = nullptr;
   refresh_time_label = nullptr;
+  card_title_label = nullptr;
 }
 
 void WeatherUI::createWeatherScreen()
@@ -34,9 +37,15 @@ void WeatherUI::createWeatherScreen()
   // Create refresh timestamp label at bottom (below lower card)
   refresh_time_label = lv_label_create(weather_container);
   lv_label_set_text(refresh_time_label, "Refreshed: --");
-  lv_obj_set_style_text_font(refresh_time_label, &lv_font_montserrat_16, LV_PART_MAIN); // Increased from 14 to 16
+#if DISPLAY_HORIZONTAL
+  lv_obj_set_style_text_font(refresh_time_label, &lv_font_montserrat_14, LV_PART_MAIN);
   lv_obj_set_style_text_color(refresh_time_label, lv_color_hex(0x888888), LV_PART_MAIN);
-  lv_obj_align(refresh_time_label, LV_ALIGN_BOTTOM_MID, 0, -5); // Lowered by 1pt from -6 to -5
+  lv_obj_align(refresh_time_label, LV_ALIGN_BOTTOM_MID, 0, -3);
+#else
+  lv_obj_set_style_text_font(refresh_time_label, &lv_font_montserrat_16, LV_PART_MAIN);
+  lv_obj_set_style_text_color(refresh_time_label, lv_color_hex(0x888888), LV_PART_MAIN);
+  lv_obj_align(refresh_time_label, LV_ALIGN_BOTTOM_MID, 0, -5);
+#endif
 }
 
 void WeatherUI::createScreenBase()
@@ -62,18 +71,30 @@ void WeatherUI::createTitleLabel()
   // Weather state label at top (will be updated with actual state)
   title_label = lv_label_create(weather_container);
   lv_label_set_text(title_label, "Weather");
-  lv_obj_set_style_text_font(title_label, &lv_font_montserrat_16, LV_PART_MAIN);  // Increased from 14 to 16
-  lv_obj_set_style_text_color(title_label, lv_color_hex(0x1976d2), LV_PART_MAIN); // Darker blue for clarity
-  lv_obj_align(title_label, LV_ALIGN_TOP_MID, 0, 10);                             // Reduced from 15 to 10
+#if DISPLAY_HORIZONTAL
+  // In horizontal mode, title is inside the upper card - hide this one
+  lv_obj_add_flag(title_label, LV_OBJ_FLAG_HIDDEN);
+#else
+  lv_obj_set_style_text_font(title_label, &lv_font_montserrat_16, LV_PART_MAIN);
+  lv_obj_set_style_text_color(title_label, lv_color_hex(0x1976d2), LV_PART_MAIN);
+  lv_obj_align(title_label, LV_ALIGN_TOP_MID, 0, 10);
+#endif
 }
 
 void WeatherUI::createUpperCard()
 {
   // === UPPER CARD: Weather & Temperature ===
   main_card = lv_obj_create(weather_container);
+#if DISPLAY_HORIZONTAL
+  // Horizontal: Full width upper card starting from top
+  lv_obj_set_size(main_card, LV_HOR_RES - 10, 95);
+  lv_obj_align(main_card, LV_ALIGN_TOP_MID, 0, 5);
+#else
+  // Vertical: Full width upper card
   lv_obj_set_size(main_card, LV_HOR_RES - 20, 165);
-  lv_obj_align(main_card, LV_ALIGN_TOP_MID, 0, 35);                           // Reduced from 40 to 35
-  lv_obj_set_style_bg_color(main_card, lv_color_hex(0x29006b), LV_PART_MAIN); // Match icon background (RGB565 0x280d)
+  lv_obj_align(main_card, LV_ALIGN_TOP_MID, 0, 35);
+#endif
+  lv_obj_set_style_bg_color(main_card, lv_color_hex(0x29006b), LV_PART_MAIN); // Match icon background
   lv_obj_set_style_border_width(main_card, 0, LV_PART_MAIN);
   lv_obj_set_style_radius(main_card, 15, LV_PART_MAIN);
   lv_obj_set_style_pad_all(main_card, 8, LV_PART_MAIN);
@@ -82,55 +103,137 @@ void WeatherUI::createUpperCard()
   lv_obj_set_style_shadow_opa(main_card, LV_OPA_30, LV_PART_MAIN);
   lv_obj_clear_flag(main_card, LV_OBJ_FLAG_SCROLLABLE);
 
-  // Weather icon - top of upper card (using emoji)
-  // Create container for PNG weather icon
+#if DISPLAY_HORIZONTAL
+  // Weather status label inside upper card (horizontal only)
+  card_title_label = lv_label_create(main_card);
+  lv_label_set_text(card_title_label, "Weather");
+  lv_obj_set_style_text_font(card_title_label, &lv_font_montserrat_16, LV_PART_MAIN);
+  lv_obj_set_style_text_color(card_title_label, lv_color_hex(0xe3f2fd), LV_PART_MAIN);
+  lv_obj_align(card_title_label, LV_ALIGN_TOP_LEFT, 5, 2);
+#endif
+
+  // Weather icon - top of upper card (vertical) or left side (horizontal)
   weather_icon_img = lv_obj_create(main_card);
+#if DISPLAY_HORIZONTAL
+  lv_obj_set_size(weather_icon_img, 64, 64);
+  lv_obj_set_style_bg_opa(weather_icon_img, LV_OPA_TRANSP, 0);
+  lv_obj_set_style_border_width(weather_icon_img, 0, 0);
+  lv_obj_set_style_pad_all(weather_icon_img, 0, 0);
+  lv_obj_clear_flag(weather_icon_img, LV_OBJ_FLAG_SCROLLABLE);
+  lv_obj_align(weather_icon_img, LV_ALIGN_LEFT_MID, 5, 8);
+#else
   lv_obj_set_size(weather_icon_img, 64, 64);
   lv_obj_set_style_bg_opa(weather_icon_img, LV_OPA_TRANSP, 0);
   lv_obj_set_style_border_width(weather_icon_img, 0, 0);
   lv_obj_set_style_pad_all(weather_icon_img, 0, 0);
   lv_obj_align(weather_icon_img, LV_ALIGN_TOP_MID, 0, 0);
+#endif
 
-  // Large temperature - center of upper card
+  // Large temperature - center of upper card (vertical) or right side (horizontal)
   temperature_label = lv_label_create(main_card);
   lv_label_set_text(temperature_label, "--°");
+#if DISPLAY_HORIZONTAL
+  lv_obj_set_style_text_font(temperature_label, &lv_font_montserrat_48, LV_PART_MAIN);
+  lv_obj_set_style_text_color(temperature_label, lv_color_hex(0xffffff), LV_PART_MAIN);
+  lv_obj_align(temperature_label, LV_ALIGN_CENTER, 10, 5);
+#else
   lv_obj_set_style_text_font(temperature_label, &lv_font_montserrat_48, LV_PART_MAIN);
   lv_obj_set_style_text_color(temperature_label, lv_color_hex(0xffffff), LV_PART_MAIN);
   lv_obj_align(temperature_label, LV_ALIGN_CENTER, 0, 15);
+#endif
 
   // Low/High temperature range - bottom center of upper card
   temp_low_label = lv_label_create(main_card);
   lv_label_set_text(temp_low_label, "-- - --°");
+#if DISPLAY_HORIZONTAL
+  lv_obj_set_style_text_font(temp_low_label, &lv_font_montserrat_24, LV_PART_MAIN);
+  lv_obj_set_style_text_color(temp_low_label, lv_color_hex(0xb39ddb), LV_PART_MAIN); // Dimmed purple
+  lv_obj_align(temp_low_label, LV_ALIGN_BOTTOM_RIGHT, -10, -5);
+#else
   lv_obj_set_style_text_font(temp_low_label, &lv_font_montserrat_24, LV_PART_MAIN);
   lv_obj_set_style_text_color(temp_low_label, lv_color_hex(0xe3f2fd), LV_PART_MAIN);
   lv_obj_align(temp_low_label, LV_ALIGN_BOTTOM_MID, 0, -8);
+#endif
 }
 
 void WeatherUI::createLowerCard()
 {
   // === LOWER CARD: Air Quality & Humidity Info ===
   info_card = lv_obj_create(weather_container);
-  lv_obj_set_size(info_card, LV_HOR_RES - 20, 80); // Increased from 78 to 80 (2pt increase)
+#if DISPLAY_HORIZONTAL
+  // Horizontal: Full width lower card below upper card
+  lv_obj_set_size(info_card, LV_HOR_RES - 10, 38);
+  lv_obj_align(info_card, LV_ALIGN_TOP_MID, 0, 104);
+#else
+  // Vertical: Full width lower card
+  lv_obj_set_size(info_card, LV_HOR_RES - 20, 80);
   lv_obj_align(info_card, LV_ALIGN_TOP_MID, 0, 210);
+#endif
   lv_obj_set_style_bg_color(info_card, lv_color_hex(0x004d40), LV_PART_MAIN); // Dark teal-green
   lv_obj_set_style_border_width(info_card, 0, LV_PART_MAIN);
   lv_obj_set_style_radius(info_card, 15, LV_PART_MAIN);
+#if DISPLAY_HORIZONTAL
+  lv_obj_set_style_pad_top(info_card, 6, LV_PART_MAIN);
+  lv_obj_set_style_pad_left(info_card, 15, LV_PART_MAIN);
+  lv_obj_set_style_pad_right(info_card, 15, LV_PART_MAIN);
+  lv_obj_set_style_pad_bottom(info_card, 6, LV_PART_MAIN);
+#else
   lv_obj_set_style_pad_top(info_card, 8, LV_PART_MAIN);
-  lv_obj_set_style_pad_left(info_card, 8, LV_PART_MAIN);
-  lv_obj_set_style_pad_right(info_card, 8, LV_PART_MAIN);
-  lv_obj_set_style_pad_bottom(info_card, 20, LV_PART_MAIN); // Increased bottom padding from 16 to 20
+  lv_obj_set_style_pad_left(info_card, 15, LV_PART_MAIN);
+  lv_obj_set_style_pad_right(info_card, 15, LV_PART_MAIN);
+  lv_obj_set_style_pad_bottom(info_card, 8, LV_PART_MAIN);
+#endif
   lv_obj_set_style_shadow_width(info_card, 10, LV_PART_MAIN);
   lv_obj_set_style_shadow_color(info_card, lv_color_hex(0x000000), LV_PART_MAIN);
   lv_obj_set_style_shadow_opa(info_card, LV_OPA_30, LV_PART_MAIN);
   lv_obj_clear_flag(info_card, LV_OBJ_FLAG_SCROLLABLE);
 
-  // === AIR QUALITY ROW (First line) ===
-  // AQI icon (warning symbol for air quality) in lower card
-  aqi_icon_img = lv_label_create(info_card);
-  lv_label_set_text(aqi_icon_img, LV_SYMBOL_WARNING); // Warning/alert symbol for air quality
+#if DISPLAY_HORIZONTAL
+  // === HORIZONTAL MODE: Simple text labels ===
+  // PM2.5 label on the left: "PM2.5: xxx"
+  aqi_icon_img = lv_label_create(info_card); // Reuse as combined label
+  lv_label_set_text(aqi_icon_img, "PM2.5:");
   lv_obj_set_style_text_font(aqi_icon_img, &lv_font_montserrat_16, LV_PART_MAIN);
   lv_obj_set_style_text_color(aqi_icon_img, lv_color_hex(0xe8f5e9), LV_PART_MAIN);
-  lv_obj_align(aqi_icon_img, LV_ALIGN_TOP_LEFT, 5, 8);
+  lv_obj_align(aqi_icon_img, LV_ALIGN_LEFT_MID, 0, 0);
+
+  // AQI value
+  aqi_info_label = lv_label_create(info_card);
+  lv_label_set_text(aqi_info_label, "--");
+  lv_obj_set_style_text_font(aqi_info_label, &lv_font_montserrat_24, LV_PART_MAIN);
+  lv_obj_set_style_text_color(aqi_info_label, lv_color_hex(0xffffff), LV_PART_MAIN);
+  lv_obj_align(aqi_info_label, LV_ALIGN_LEFT_MID, 65, 0);
+
+  // Hide unused labels in horizontal mode
+  aqi_unit_label = lv_label_create(info_card);
+  lv_obj_add_flag(aqi_unit_label, LV_OBJ_FLAG_HIDDEN);
+
+  // Humidity label on the right: "Humidity: xx%"
+  humidity_icon_img = lv_label_create(info_card); // Reuse as combined label
+  lv_label_set_text(humidity_icon_img, "Humidity:");
+  lv_obj_set_style_text_font(humidity_icon_img, &lv_font_montserrat_16, LV_PART_MAIN);
+  lv_obj_set_style_text_color(humidity_icon_img, lv_color_hex(0xe8f5e9), LV_PART_MAIN);
+  lv_obj_align(humidity_icon_img, LV_ALIGN_CENTER, 20, 0);
+
+  // Humidity value with %
+  humidity_info_label = lv_label_create(info_card);
+  lv_label_set_text(humidity_info_label, "--%");
+  lv_obj_set_style_text_font(humidity_info_label, &lv_font_montserrat_24, LV_PART_MAIN);
+  lv_obj_set_style_text_color(humidity_info_label, lv_color_hex(0xffffff), LV_PART_MAIN);
+  lv_obj_align(humidity_info_label, LV_ALIGN_RIGHT_MID, 0, 0);
+
+  // Hide unused labels in horizontal mode
+  humidity_unit_label = lv_label_create(info_card);
+  lv_obj_add_flag(humidity_unit_label, LV_OBJ_FLAG_HIDDEN);
+
+#else
+  // === VERTICAL MODE: Original layout with icons ===
+  // AQI icon (using LVGL symbol)
+  aqi_icon_img = lv_label_create(info_card);
+  lv_label_set_text(aqi_icon_img, AIR_QUALITY_ICON_SYMBOL);
+  lv_obj_set_style_text_color(aqi_icon_img, lv_color_hex(0xffffff), LV_PART_MAIN);
+  lv_obj_set_style_text_font(aqi_icon_img, &lv_font_montserrat_16, LV_PART_MAIN);
+  lv_obj_align(aqi_icon_img, LV_ALIGN_TOP_LEFT, 5, 10);
 
   // AQI unit label (smaller)
   aqi_unit_label = lv_label_create(info_card);
@@ -139,7 +242,7 @@ void WeatherUI::createLowerCard()
   lv_obj_set_style_text_color(aqi_unit_label, lv_color_hex(0xe8f5e9), LV_PART_MAIN);
   lv_obj_align_to(aqi_unit_label, aqi_icon_img, LV_ALIGN_BOTTOM_LEFT, 80, 4);
 
-  // AQI value in lower card (anchored to left of unit label)
+  // AQI value in lower card
   aqi_info_label = lv_label_create(info_card);
   lv_label_set_text(aqi_info_label, "--");
   lv_obj_set_style_text_font(aqi_info_label, &lv_font_montserrat_26, LV_PART_MAIN);
@@ -147,28 +250,28 @@ void WeatherUI::createLowerCard()
   lv_obj_set_style_text_align(aqi_info_label, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN);
   lv_obj_align(aqi_info_label, LV_ALIGN_TOP_RIGHT, -56, 4);
 
-  // === HUMIDITY ROW (Second line) ===
-  // Humidity icon (droplet symbol) in lower card
+  // Humidity icon (using LVGL symbol)
   humidity_icon_img = lv_label_create(info_card);
-  lv_label_set_text(humidity_icon_img, LV_SYMBOL_TINT); // Water droplet
+  lv_label_set_text(humidity_icon_img, HUMIDITY_ICON_SYMBOL);
+  lv_obj_set_style_text_color(humidity_icon_img, lv_color_hex(0xffffff), LV_PART_MAIN);
   lv_obj_set_style_text_font(humidity_icon_img, &lv_font_montserrat_16, LV_PART_MAIN);
-  lv_obj_set_style_text_color(humidity_icon_img, lv_color_hex(0xe8f5e9), LV_PART_MAIN);
-  lv_obj_align(humidity_icon_img, LV_ALIGN_TOP_LEFT, 5, 42);
+  lv_obj_align(humidity_icon_img, LV_ALIGN_TOP_LEFT, 5, 44);
 
-  // Humidity unit label (smaller, right-aligned) - position first as anchor
+  // Humidity unit label (smaller, right-aligned)
   humidity_unit_label = lv_label_create(info_card);
   lv_label_set_text(humidity_unit_label, "%");
   lv_obj_set_style_text_font(humidity_unit_label, &lv_font_montserrat_16, LV_PART_MAIN);
   lv_obj_set_style_text_color(humidity_unit_label, lv_color_hex(0xe8f5e9), LV_PART_MAIN);
   lv_obj_align_to(humidity_unit_label, humidity_icon_img, LV_ALIGN_BOTTOM_LEFT, 80, 4);
 
-  // Humidity value in lower card (anchored to left of unit label)
+  // Humidity value in lower card
   humidity_info_label = lv_label_create(info_card);
   lv_label_set_text(humidity_info_label, "--");
   lv_obj_set_style_text_font(humidity_info_label, &lv_font_montserrat_26, LV_PART_MAIN);
   lv_obj_set_style_text_color(humidity_info_label, lv_color_hex(0xffffff), LV_PART_MAIN);
   lv_obj_set_style_text_align(humidity_info_label, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN);
   lv_obj_align(humidity_info_label, LV_ALIGN_TOP_RIGHT, -56, 36);
+#endif
 }
 
 void WeatherUI::updateWeatherDisplay()
@@ -188,6 +291,13 @@ void WeatherUI::updateWeatherDisplay()
     // Update weather state title
     const char *stateName = WeatherIcons::getConditionDisplayName(weather.condition_code);
     lv_label_set_text(title_label, stateName);
+#if DISPLAY_HORIZONTAL
+    // Also update card title in horizontal mode
+    if (card_title_label)
+    {
+      lv_label_set_text(card_title_label, stateName);
+    }
+#endif
 
     // Update weather icon with day/night variant
     if (weather_icon_img)
@@ -205,8 +315,16 @@ void WeatherUI::updateWeatherDisplay()
   {
     // Show error state
     lv_label_set_text(title_label, "Weather");
-    lv_label_set_text(temperature_label, "--°");
+#if DISPLAY_HORIZONTAL
+    if (card_title_label)
+    {
+      lv_label_set_text(card_title_label, "Weather");
+    }
+    lv_label_set_text(humidity_info_label, "--%");
+#else
     lv_label_set_text(humidity_info_label, "--");
+#endif
+    lv_label_set_text(temperature_label, "--°");
     lv_label_set_text(aqi_info_label, "--");
     lv_label_set_text(refresh_time_label, LV_SYMBOL_LOOP "  --");
   }
@@ -238,7 +356,12 @@ void WeatherUI::updateTemperatureDisplay(const WeatherData &weather)
 // Helper method: Update humidity display
 void WeatherUI::updateHumidityDisplay(const WeatherData &weather)
 {
+#if DISPLAY_HORIZONTAL
+  // Horizontal mode: include % in the value
+  String humidity_str = String(weather.humidity) + "%";
+#else
   String humidity_str = String(weather.humidity);
+#endif
   lv_label_set_text(humidity_info_label, humidity_str.c_str());
 }
 

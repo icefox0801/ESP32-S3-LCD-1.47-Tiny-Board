@@ -35,8 +35,12 @@ void lvgl_setup_spi()
 
 void lvgl_setup_display()
 {
+#if DISPLAY_HORIZONTAL
+  tft.init(SCREEN_HEIGHT, SCREEN_WIDTH); // Init with physical dimensions
+#else
   tft.init(SCREEN_WIDTH, SCREEN_HEIGHT);
-  tft.setRotation(0);
+#endif
+  tft.setRotation(TFT_ROTATION);
 }
 
 void lvgl_init_display()

@@ -21,8 +21,18 @@
 #define TFT_BACKLIGHT_PWM 180 // PWM value for backlight (0-255, 180 = ~70% brightness)
 
 // Display dimensions for ESP32-S3-LCD-1.47-Tiny-Board
+// Physical panel: 172x320 pixels
+#include "../config.h"
+
+#if DISPLAY_HORIZONTAL
+#define SCREEN_WIDTH 320
+#define SCREEN_HEIGHT 172
+#define TFT_ROTATION 3 // Landscape mode (rotated 180°)
+#else
 #define SCREEN_WIDTH 172
 #define SCREEN_HEIGHT 320
+#define TFT_ROTATION 0 // Portrait mode (default)
+#endif
 
 // SPI settings
 #define SPI_FREQUENCY 80000000 // 80MHz SPI speed (high performance)
